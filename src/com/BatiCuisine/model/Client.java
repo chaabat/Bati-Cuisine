@@ -6,15 +6,19 @@ public class Client {
     private String name;
     private String address;
     private String phone;
-    private boolean is_professional;
+    private boolean isProfessional;
 
-    public Client(int id, String name, String address, String phone, boolean is_professional) {
+    // Constructor
+
+    public Client(int id, String name, String address, String phone, boolean isProfessional) {
         this.id = id;
         this.name = name;
         this.address = address;
         this.phone = phone;
-        this.is_professional = is_professional;
+        this.isProfessional = isProfessional;
     }
+
+    //Getters & Setters
 
     public int getId() {
         return id;
@@ -48,11 +52,11 @@ public class Client {
         this.phone = phone;
     }
 
-    public boolean isIs_professional() {
-        return is_professional;
+    public boolean isProfessional() {
+        return isProfessional;
     }
 
-    public void setIs_professional(boolean is_professional) {
-        this.is_professional = is_professional;
+    public void setProfessional(boolean isProfessional) {
+        this.isProfessional = isProfessional;
     }
 }
