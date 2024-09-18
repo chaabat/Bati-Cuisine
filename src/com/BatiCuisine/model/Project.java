@@ -1,17 +1,27 @@
 package com.BatiCuisine.model;
 
-public class Project {
+import java.util.UUID;
 
-    private int id;
+public class Project {
+    private UUID id;  // UUID for unique identification
     private String projectName;
     private double projectMargin;
     private double totalCost;
-    private String projectStatus;
+    private ProjectStatus projectStatus;  // Use enum for status
     private Client client;
 
-    // Constructor
+    // Constructor for creating a new Project (without ID)
+    public Project(String projectName, double projectMargin, ProjectStatus projectStatus, double totalCost, Client client) {
+        this.id = UUID.randomUUID();  // Generate a new UUID for new projects
+        this.projectName = projectName;
+        this.projectMargin = projectMargin;
+        this.projectStatus = projectStatus;
+        this.totalCost = totalCost;
+        this.client = client;
+    }
 
-    public Project(int id, String projectName, double projectMargin, String projectStatus, double totalCost, Client client) {
+    // Constructor for initializing a Project from the database (with ID)
+    public Project(UUID id, String projectName, double projectMargin, ProjectStatus projectStatus, double totalCost, Client client) {
         this.id = id;
         this.projectName = projectName;
         this.projectMargin = projectMargin;
@@ -20,13 +30,13 @@ public class Project {
         this.client = client;
     }
 
-    //Getters & Setters
+    // Getters & Setters
 
-    public int getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
@@ -54,11 +64,11 @@ public class Project {
         this.totalCost = totalCost;
     }
 
-    public String getProjectStatus() {
+    public ProjectStatus getProjectStatus() {
         return projectStatus;
     }
 
-    public void setProjectStatus(String projectStatus) {
+    public void setProjectStatus(ProjectStatus projectStatus) {
         this.projectStatus = projectStatus;
     }
 

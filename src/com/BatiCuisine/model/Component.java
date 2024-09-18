@@ -1,7 +1,10 @@
 package com.BatiCuisine.model;
 
+
+import java.util.UUID;
+
 public class Component {
-    private int id;
+    private UUID id;
     private String name;
     private double unitCost;
     private double quantity;
@@ -9,9 +12,8 @@ public class Component {
     private double taxRate;
     private Project project;
 
-// Constructor
-
-    public Component(int id, String name, double unitCost, double quantity, String componentType, double taxRate, Project project) {
+    // Constructor with UUID (for components fetched from the database)
+    public Component(UUID id, String name, double unitCost, double quantity, String componentType, double taxRate, Project project) {
         this.id = id;
         this.name = name;
         this.unitCost = unitCost;
@@ -21,13 +23,22 @@ public class Component {
         this.project = project;
     }
 
-    // Getters & Setters
+    // Constructor without UUID (for new components, UUID generated in database)
+    public Component(String name, double unitCost, double quantity, String componentType, double taxRate, Project project) {
+        this.name = name;
+        this.unitCost = unitCost;
+        this.quantity = quantity;
+        this.componentType = componentType;
+        this.taxRate = taxRate;
+        this.project = project;
+    }
 
-    public int getId() {
+    // Getters & Setters
+    public UUID getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
@@ -78,5 +89,4 @@ public class Component {
     public void setProject(Project project) {
         this.project = project;
     }
-
 }

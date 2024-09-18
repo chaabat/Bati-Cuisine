@@ -1,16 +1,17 @@
 package com.BatiCuisine.model;
 
+import java.util.UUID;
+
 public class Client {
 
-    private int id;
+    private UUID id;  // Change id type to UUID
     private String name;
     private String address;
     private String phone;
     private boolean isProfessional;
 
-    // Constructor
-
-    public Client(int id, String name, String address, String phone, boolean isProfessional) {
+    // Constructor with UUID (when fetched from database)
+    public Client(UUID id, String name, String address, String phone, boolean isProfessional) {
         this.id = id;
         this.name = name;
         this.address = address;
@@ -18,13 +19,20 @@ public class Client {
         this.isProfessional = isProfessional;
     }
 
-    //Getters & Setters
+    // Constructor without UUID (for new clients, UUID generated automatically in database)
+    public Client(String name, String address, String phone, boolean isProfessional) {
+        this.name = name;
+        this.address = address;
+        this.phone = phone;
+        this.isProfessional = isProfessional;
+    }
 
-    public int getId() {
+    // Getters & Setters
+    public UUID getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

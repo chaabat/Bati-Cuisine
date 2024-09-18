@@ -1,18 +1,28 @@
 package com.BatiCuisine.model;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 public class Quote {
-    private int id;
+    private UUID id;                   // Changed to UUID
     private double estimatedAmount;
     private LocalDate issueDate;
     private LocalDate validityDate;
-    private  boolean isAccepted;
+    private boolean isAccepted;
     private Project project;
 
-    // Constructor
+    // Constructor for creating a new Quote (without ID)
+    public Quote(double estimatedAmount, LocalDate issueDate, LocalDate validityDate, boolean isAccepted, Project project) {
+        this.id = UUID.randomUUID();
+        this.estimatedAmount = estimatedAmount;
+        this.issueDate = issueDate;
+        this.validityDate = validityDate;
+        this.isAccepted = isAccepted;
+        this.project = project;
+    }
 
-    public Quote(int id, double estimatedAmount, LocalDate issueDate, LocalDate validityDate, boolean isAccepted, Project project) {
+    // Constructor for initializing a Quote from the database (with ID)
+    public Quote(UUID id, double estimatedAmount, LocalDate issueDate, LocalDate validityDate, boolean isAccepted, Project project) {
         this.id = id;
         this.estimatedAmount = estimatedAmount;
         this.issueDate = issueDate;
@@ -23,11 +33,11 @@ public class Quote {
 
     // Getters & Setters
 
-    public int getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
