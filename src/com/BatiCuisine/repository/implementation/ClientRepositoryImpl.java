@@ -3,7 +3,7 @@ package com.BatiCuisine.repository.implementation;
 
 import com.BatiCuisine.model.Client;
 import com.BatiCuisine.repository.interfaces.ClientRepository;
-import com.BatiCuisine.util.DataBaseConnection;
+import com.BatiCuisine.config.DataBaseConnection;
 
 import java.sql.*;
 import java.util.ArrayList;
