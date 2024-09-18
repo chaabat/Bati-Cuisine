@@ -1,18 +1,19 @@
 package com.BatiCuisine.model;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public class Project {
-    private UUID id;  // UUID for unique identification
+    private UUID id;
     private String projectName;
-    private double projectMargin;
-    private double totalCost;
-    private ProjectStatus projectStatus;  // Use enum for status
+    private BigDecimal projectMargin;  // Use BigDecimal for precision
+    private BigDecimal totalCost;      // Use BigDecimal for precision
+    private ProjectStatus projectStatus;
     private Client client;
 
     // Constructor for creating a new Project (without ID)
-    public Project(String projectName, double projectMargin, ProjectStatus projectStatus, double totalCost, Client client) {
-        this.id = UUID.randomUUID();  // Generate a new UUID for new projects
+    public Project(String projectName, BigDecimal projectMargin, ProjectStatus projectStatus, BigDecimal totalCost, Client client) {
+        this.id = UUID.randomUUID();
         this.projectName = projectName;
         this.projectMargin = projectMargin;
         this.projectStatus = projectStatus;
@@ -21,7 +22,7 @@ public class Project {
     }
 
     // Constructor for initializing a Project from the database (with ID)
-    public Project(UUID id, String projectName, double projectMargin, ProjectStatus projectStatus, double totalCost, Client client) {
+    public Project(UUID id, String projectName, BigDecimal projectMargin, ProjectStatus projectStatus, BigDecimal totalCost, Client client) {
         this.id = id;
         this.projectName = projectName;
         this.projectMargin = projectMargin;
@@ -48,19 +49,19 @@ public class Project {
         this.projectName = projectName;
     }
 
-    public double getProjectMargin() {
+    public BigDecimal getProjectMargin() {
         return projectMargin;
     }
 
-    public void setProjectMargin(double projectMargin) {
+    public void setProjectMargin(BigDecimal projectMargin) {
         this.projectMargin = projectMargin;
     }
 
-    public double getTotalCost() {
+    public BigDecimal getTotalCost() {
         return totalCost;
     }
 
-    public void setTotalCost(double totalCost) {
+    public void setTotalCost(BigDecimal totalCost) {
         this.totalCost = totalCost;
     }
 

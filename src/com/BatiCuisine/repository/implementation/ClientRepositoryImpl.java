@@ -1,6 +1,5 @@
 package com.BatiCuisine.repository.implementation;
 
-
 import com.BatiCuisine.model.Client;
 import com.BatiCuisine.repository.interfaces.ClientRepository;
 import com.BatiCuisine.config.DataBaseConnection;
@@ -15,7 +14,7 @@ public class ClientRepositoryImpl implements ClientRepository {
 
     @Override
     public void addClient(Client client) {
-        String query = "INSERT INTO clients (name, address, phone, isProfessional) VALUES (?, ?, ?, ?)";
+        String query = "INSERT INTO clients (id, name, address, phone, isProfessional) VALUES (uuid_generate_v4(), ?, ?, ?, ?)";  // Include ID generation
         try (Connection connection = DataBaseConnection.getInstance().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, client.getName());
@@ -29,16 +28,16 @@ public class ClientRepositoryImpl implements ClientRepository {
     }
 
     @Override
-    public Optional<Client> getClientById(int id) {
+    public Optional<Client> getClientById(UUID id) {
         String query = "SELECT * FROM clients WHERE id = ?";
         try (Connection connection = DataBaseConnection.getInstance().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setInt(1, id);
+            statement.setObject(1, id, java.sql.Types.OTHER);  // Use setObject() for UUID
             ResultSet resultSet = statement.executeQuery();
 
             if (resultSet.next()) {
                 Client client = new Client(
-                        (UUID) resultSet.getObject("id"),
+                        (UUID) resultSet.getObject("id"),  // Retrieve UUID from the database
                         resultSet.getString("name"),
                         resultSet.getString("address"),
                         resultSet.getString("phone"),
@@ -62,7 +61,7 @@ public class ClientRepositoryImpl implements ClientRepository {
 
             while (resultSet.next()) {
                 Client client = new Client(
-                        (UUID) resultSet.getObject("id"),
+                        (UUID) resultSet.getObject("id"),  // Retrieve UUID
                         resultSet.getString("name"),
                         resultSet.getString("address"),
                         resultSet.getString("phone"),
