@@ -1,16 +1,17 @@
 package com.BatiCuisine.model;
 
-
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public class Labor {
-    private UUID componentId;   // Change componentId type to UUID
-    private double hourlyRate;
-    private double hoursWorked;
-    private double productivityFactor;
+    private UUID componentId; // UUID for database identification
+    private String laborType; // String for type of labor
+    private BigDecimal hourlyRate;
+    private BigDecimal hoursWorked;
+    private BigDecimal productivityFactor;
 
     // Constructor with UUID (for labor fetched from the database)
-    public Labor(UUID componentId, double hourlyRate, double hoursWorked, double productivityFactor) {
+    public Labor(UUID componentId, BigDecimal hourlyRate, BigDecimal hoursWorked, BigDecimal productivityFactor) {
         this.componentId = componentId;
         this.hourlyRate = hourlyRate;
         this.hoursWorked = hoursWorked;
@@ -18,10 +19,11 @@ public class Labor {
     }
 
     // Constructor without UUID (for new labor)
-    public Labor(double hourlyRate, double hoursWorked, double productivityFactor) {
-        this.hourlyRate = hourlyRate;
-        this.hoursWorked = hoursWorked;
-        this.productivityFactor = productivityFactor;
+    public Labor(String laborType, BigDecimal hourlyRate, BigDecimal hoursWorked, BigDecimal productivityFactor) {
+        this(UUID.randomUUID(), hourlyRate, hoursWorked, productivityFactor);
+    }
+
+    public Labor(BigDecimal hourlyRate, BigDecimal hoursWorked, BigDecimal productivityFactor) {
     }
 
     // Getters & Setters
@@ -33,35 +35,43 @@ public class Labor {
         this.componentId = componentId;
     }
 
-    public double getHourlyRate() {
+    public String getLaborType() {
+        return laborType;
+    }
+
+    public void setLaborType(String laborType) {
+        this.laborType = laborType;
+    }
+
+    public BigDecimal getHourlyRate() {
         return hourlyRate;
     }
 
-    public void setHourlyRate(double hourlyRate) {
+    public void setHourlyRate(BigDecimal hourlyRate) {
         this.hourlyRate = hourlyRate;
     }
 
-    public double getHoursWorked() {
+    public BigDecimal getHoursWorked() {
         return hoursWorked;
     }
 
-    public void setHoursWorked(double hoursWorked) {
+    public void setHoursWorked(BigDecimal hoursWorked) {
         this.hoursWorked = hoursWorked;
     }
 
-    public double getProductivityFactor() {
+    public BigDecimal getProductivityFactor() {
         return productivityFactor;
     }
 
-    public void setProductivityFactor(double productivityFactor) {
+    public void setProductivityFactor(BigDecimal productivityFactor) {
         this.productivityFactor = productivityFactor;
     }
 
-    // Optionally override toString() for meaningful output
     @Override
     public String toString() {
         return "Labor{" +
                 "componentId=" + componentId +
+                ", laborType='" + laborType + '\'' +
                 ", hourlyRate=" + hourlyRate +
                 ", hoursWorked=" + hoursWorked +
                 ", productivityFactor=" + productivityFactor +

@@ -1,18 +1,19 @@
 package com.BatiCuisine.model;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
 public class Quote {
     private UUID id;                   // Changed to UUID
-    private double estimatedAmount;
+    private BigDecimal estimatedAmount;
     private LocalDate issueDate;
     private LocalDate validityDate;
     private boolean isAccepted;
     private Project project;
 
     // Constructor for creating a new Quote (without ID)
-    public Quote(double estimatedAmount, LocalDate issueDate, LocalDate validityDate, boolean isAccepted, Project project) {
+    public Quote(BigDecimal estimatedAmount, LocalDate issueDate, LocalDate validityDate, boolean isAccepted, Project project) {
         this.id = UUID.randomUUID();
         this.estimatedAmount = estimatedAmount;
         this.issueDate = issueDate;
@@ -22,7 +23,7 @@ public class Quote {
     }
 
     // Constructor for initializing a Quote from the database (with ID)
-    public Quote(UUID id, double estimatedAmount, LocalDate issueDate, LocalDate validityDate, boolean isAccepted, Project project) {
+    public Quote(UUID id, BigDecimal estimatedAmount, LocalDate issueDate, LocalDate validityDate, boolean isAccepted, Project project) {
         this.id = id;
         this.estimatedAmount = estimatedAmount;
         this.issueDate = issueDate;
@@ -41,11 +42,11 @@ public class Quote {
         this.id = id;
     }
 
-    public double getEstimatedAmount() {
+    public BigDecimal getEstimatedAmount() {
         return estimatedAmount;
     }
 
-    public void setEstimatedAmount(double estimatedAmount) {
+    public void setEstimatedAmount(BigDecimal estimatedAmount) {
         this.estimatedAmount = estimatedAmount;
     }
 

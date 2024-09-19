@@ -7,7 +7,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ProjectRepository {
-    void addProject(Project project);   // Method to add a new project
-    Optional<Project> getProjectById(UUID id);   // Method to get a project by its UUID
-    List<Project> getAllProjects();   // Method to retrieve all projects
+    void addProject(Project project);
+    Optional<Project> getProjectById(UUID id);
+    List<Project> getAllProjects();
 }

@@ -1,45 +1,33 @@
 package com.BatiCuisine.model;
 
-
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public class Component {
-    private UUID id;
+    private UUID componentId;
     private String name;
-    private double unitCost;
-    private double quantity;
-    private String componentType;
-    private double taxRate;
-    private Project project;
+    private BigDecimal unitCost;
+    private BigDecimal quantity;
+    private BigDecimal taxRate;
+    private UUID projectId;
 
-    // Constructor with UUID (for components fetched from the database)
-    public Component(UUID id, String name, double unitCost, double quantity, String componentType, double taxRate, Project project) {
-        this.id = id;
+    // Constructor
+    public Component(UUID componentId, String name, BigDecimal unitCost, BigDecimal quantity, BigDecimal taxRate, UUID projectId) {
+        this.componentId = componentId;
         this.name = name;
         this.unitCost = unitCost;
         this.quantity = quantity;
-        this.componentType = componentType;
         this.taxRate = taxRate;
-        this.project = project;
+        this.projectId = projectId;
     }
 
-    // Constructor without UUID (for new components, UUID generated in database)
-    public Component(String name, double unitCost, double quantity, String componentType, double taxRate, Project project) {
-        this.name = name;
-        this.unitCost = unitCost;
-        this.quantity = quantity;
-        this.componentType = componentType;
-        this.taxRate = taxRate;
-        this.project = project;
+    // Getters and Setters
+    public UUID getComponentId() {
+        return componentId;
     }
 
-    // Getters & Setters
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
+    public void setComponentId(UUID componentId) {
+        this.componentId = componentId;
     }
 
     public String getName() {
@@ -50,43 +38,35 @@ public class Component {
         this.name = name;
     }
 
-    public double getUnitCost() {
+    public BigDecimal getUnitCost() {
         return unitCost;
     }
 
-    public void setUnitCost(double unitCost) {
+    public void setUnitCost(BigDecimal unitCost) {
         this.unitCost = unitCost;
     }
 
-    public double getQuantity() {
+    public BigDecimal getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(double quantity) {
+    public void setQuantity(BigDecimal quantity) {
         this.quantity = quantity;
     }
 
-    public String getComponentType() {
-        return componentType;
-    }
-
-    public void setComponentType(String componentType) {
-        this.componentType = componentType;
-    }
-
-    public double getTaxRate() {
+    public BigDecimal getTaxRate() {
         return taxRate;
     }
 
-    public void setTaxRate(double taxRate) {
+    public void setTaxRate(BigDecimal taxRate) {
         this.taxRate = taxRate;
     }
 
-    public Project getProject() {
-        return project;
+    public UUID getProjectId() {
+        return projectId;
     }
 
-    public void setProject(Project project) {
-        this.project = project;
+    public void setProjectId(UUID projectId) {
+        this.projectId = projectId;
     }
 }

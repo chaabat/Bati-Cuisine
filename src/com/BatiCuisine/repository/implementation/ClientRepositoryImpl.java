@@ -5,12 +5,12 @@ import com.BatiCuisine.repository.interfaces.ClientRepository;
 import com.BatiCuisine.config.DataBaseConnection;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ClientRepositoryImpl implements ClientRepository {
+    private final Map<UUID, Client> clientCache = new HashMap<>(); // In-memory cache
+    private static final String UUID_TYPE = "uuid";
 
     @Override
     public void addClient(Client client) {
@@ -22,6 +22,9 @@ public class ClientRepositoryImpl implements ClientRepository {
             statement.setString(3, client.getPhone());
             statement.setBoolean(4, client.isProfessional());
             statement.executeUpdate();
+
+            // Update cache after adding
+            loadClientToCache(client.getId());
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -29,10 +32,14 @@ public class ClientRepositoryImpl implements ClientRepository {
 
     @Override
     public Optional<Client> getClientById(UUID id) {
+        if (clientCache.containsKey(id)) {
+            return Optional.of(clientCache.get(id));
+        }
+
         String query = "SELECT * FROM clients WHERE id = ?";
         try (Connection connection = DataBaseConnection.getInstance().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setObject(1, id, java.sql.Types.OTHER);  // Use setObject() for UUID
+            statement.setObject(1, id, Types.OTHER);  // Use setObject() for UUID
             ResultSet resultSet = statement.executeQuery();
 
             if (resultSet.next()) {
@@ -43,6 +50,7 @@ public class ClientRepositoryImpl implements ClientRepository {
                         resultSet.getString("phone"),
                         resultSet.getBoolean("isProfessional")
                 );
+                clientCache.put(id, client);  // Cache the client
                 return Optional.of(client);
             }
         } catch (SQLException e) {
@@ -53,25 +61,35 @@ public class ClientRepositoryImpl implements ClientRepository {
 
     @Override
     public List<Client> getAllClients() {
-        List<Client> clients = new ArrayList<>();
-        String query = "SELECT * FROM clients";
-        try (Connection connection = DataBaseConnection.getInstance().getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(query)) {
+        return new ArrayList<>(clientCache.values());
+    }
 
-            while (resultSet.next()) {
+    @Override
+    public Optional<Client> getClientByName(String name) {
+        return clientCache.values().stream()
+                .filter(client -> client.getName().equalsIgnoreCase(name))
+                .findFirst();
+    }
+
+    private void loadClientToCache(UUID id) {
+        String query = "SELECT * FROM clients WHERE id = ?";
+        try (Connection connection = DataBaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setObject(1, id, Types.OTHER);  // Use setObject() for UUID
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
                 Client client = new Client(
-                        (UUID) resultSet.getObject("id"),  // Retrieve UUID
+                        (UUID) resultSet.getObject("id"),
                         resultSet.getString("name"),
                         resultSet.getString("address"),
                         resultSet.getString("phone"),
                         resultSet.getBoolean("isProfessional")
                 );
-                clients.add(client);
+                clientCache.put(id, client);
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return clients;
     }
 }

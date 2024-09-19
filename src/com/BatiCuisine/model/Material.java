@@ -1,55 +1,52 @@
 package com.BatiCuisine.model;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
-public class Material {
-    private UUID componentId;   // Change componentId type to UUID
-    private double qualityCoefficient;
-    private double transportCost;
+public class Material extends Component {
+    private BigDecimal qualityCoefficient;
+    private BigDecimal transportCost;
 
     // Constructor with UUID (for material fetched from the database)
-    public Material(UUID componentId, double qualityCoefficient, double transportCost) {
-        this.componentId = componentId;
+    public Material(UUID componentId, String name, BigDecimal unitCost, BigDecimal quantity, BigDecimal taxRate, UUID projectId, BigDecimal qualityCoefficient, BigDecimal transportCost) {
+        super(componentId, name, unitCost, quantity, taxRate, projectId);
         this.qualityCoefficient = qualityCoefficient;
         this.transportCost = transportCost;
     }
 
     // Constructor without UUID (for new material)
-    public Material(double qualityCoefficient, double transportCost) {
+    public Material(String name, BigDecimal unitCost, BigDecimal quantity, BigDecimal taxRate, UUID projectId, BigDecimal qualityCoefficient, BigDecimal transportCost) {
+        super(null, name, unitCost, quantity, taxRate, projectId);  // Pass null for UUID
         this.qualityCoefficient = qualityCoefficient;
         this.transportCost = transportCost;
     }
 
     // Getters & Setters
-
-    public UUID getComponentId() {
-        return componentId;
-    }
-
-    public void setComponentId(UUID componentId) {
-        this.componentId = componentId;
-    }
-
-    public double getQualityCoefficient() {
+    public BigDecimal getQualityCoefficient() {
         return qualityCoefficient;
     }
 
-    public void setQualityCoefficient(double qualityCoefficient) {
+    public void setQualityCoefficient(BigDecimal qualityCoefficient) {
         this.qualityCoefficient = qualityCoefficient;
     }
 
-    public double getTransportCost() {
+    public BigDecimal getTransportCost() {
         return transportCost;
     }
 
-    public void setTransportCost(double transportCost) {
+    public void setTransportCost(BigDecimal transportCost) {
         this.transportCost = transportCost;
     }
 
     @Override
     public String toString() {
         return "Material{" +
-                "componentId=" + componentId +
+                "componentId=" + getComponentId() +
+                ", name='" + getName() + '\'' +
+                ", unitCost=" + getUnitCost() +
+                ", quantity=" + getQuantity() +
+                ", taxRate=" + getTaxRate() +
+                ", projectId=" + getProjectId() +
                 ", qualityCoefficient=" + qualityCoefficient +
                 ", transportCost=" + transportCost +
                 '}';

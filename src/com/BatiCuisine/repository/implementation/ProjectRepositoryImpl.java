@@ -8,12 +8,10 @@ import com.BatiCuisine.config.DataBaseConnection;
 
 import java.sql.*;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 public class ProjectRepositoryImpl implements ProjectRepository {
+    private final Map<UUID, Project> projectCache = new HashMap<>();
 
     @Override
     public void addProject(Project project) {
@@ -24,20 +22,27 @@ public class ProjectRepositoryImpl implements ProjectRepository {
             statement.setBigDecimal(2, project.getProjectMargin());
             statement.setBigDecimal(3, project.getTotalCost());
             statement.setString(4, project.getProjectStatus().name());  // Enum as String
-            statement.setObject(5, project.getClient().getId(), java.sql.Types.OTHER);  // Client UUID
+            statement.setObject(5, project.getClient().getId(), Types.OTHER);  // Client UUID
 
             statement.executeUpdate();
+            // Cache the project after inserting
+            projectCache.put(project.getId(), project);
         } catch (SQLException e) {
             e.printStackTrace();
+            // Consider logging and/or rethrowing the exception
         }
     }
 
     @Override
     public Optional<Project> getProjectById(UUID id) {
-        String query = "SELECT * FROM projects WHERE id = ?";
+        if (projectCache.containsKey(id)) {
+            return Optional.of(projectCache.get(id));
+        }
+
+        String query = "SELECT p.*, c.name as clientName, c.address as clientAddress, c.phone as clientPhone, c.isProfessional FROM projects p JOIN clients c ON p.clientId = c.id WHERE p.id = ?";
         try (Connection connection = DataBaseConnection.getInstance().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setObject(1, id, java.sql.Types.OTHER);  // Set UUID as parameter
+            statement.setObject(1, id, Types.OTHER);  // Set UUID as parameter
 
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
@@ -55,10 +60,13 @@ public class ProjectRepositoryImpl implements ProjectRepository {
                                 resultSet.getBoolean("isProfessional")
                         )
                 );
+                // Cache the project
+                projectCache.put(project.getId(), project);
                 return Optional.of(project);
             }
         } catch (SQLException e) {
             e.printStackTrace();
+            // Consider logging and/or rethrowing the exception
         }
         return Optional.empty();
     }
@@ -66,7 +74,7 @@ public class ProjectRepositoryImpl implements ProjectRepository {
     @Override
     public List<Project> getAllProjects() {
         List<Project> projects = new ArrayList<>();
-        String query = "SELECT * FROM projects p INNER JOIN clients c ON p.clientId = c.id";
+        String query = "SELECT p.*, c.name as clientName, c.address as clientAddress, c.phone as clientPhone, c.isProfessional FROM projects p JOIN clients c ON p.clientId = c.id";
         try (Connection connection = DataBaseConnection.getInstance().getConnection();
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(query)) {
@@ -80,16 +88,19 @@ public class ProjectRepositoryImpl implements ProjectRepository {
                         resultSet.getBigDecimal("totalCost"),  // BigDecimal
                         new Client(  // Build Client object from resultSet
                                 (UUID) resultSet.getObject("clientId"),
-                                resultSet.getString("name"),
-                                resultSet.getString("address"),
-                                resultSet.getString("phone"),
+                                resultSet.getString("clientName"),
+                                resultSet.getString("clientAddress"),
+                                resultSet.getString("clientPhone"),
                                 resultSet.getBoolean("isProfessional")
                         )
                 );
+                // Cache the project
+                projectCache.put(project.getId(), project);
                 projects.add(project);
             }
         } catch (SQLException e) {
             e.printStackTrace();
+            // Consider logging and/or rethrowing the exception
         }
         return projects;
     }
