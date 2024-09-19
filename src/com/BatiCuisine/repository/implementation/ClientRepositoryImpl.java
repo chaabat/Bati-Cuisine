@@ -6,6 +6,7 @@ import com.BatiCuisine.config.DataBaseConnection;
 
 import java.sql.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ClientRepositoryImpl implements ClientRepository {
     private final Map<UUID, Client> clientCache = new HashMap<>(); // In-memory cache
@@ -32,7 +33,6 @@ public class ClientRepositoryImpl implements ClientRepository {
         }
     }
 
-
     @Override
     public Optional<Client> getClientById(UUID id) {
         if (clientCache.containsKey(id)) {
@@ -53,7 +53,7 @@ public class ClientRepositoryImpl implements ClientRepository {
                         resultSet.getString("phone"),
                         resultSet.getBoolean("isProfessional")
                 );
-                clientCache.put(id, client);
+                clientCache.put(id, client);  // Cache the client
                 return Optional.of(client);
             }
         } catch (SQLException e) {
@@ -68,9 +68,35 @@ public class ClientRepositoryImpl implements ClientRepository {
     }
 
     @Override
-    public Optional<Client> getClientByName(String name) {
-        return clientCache.values().stream()
+    public List<Client> getClientsByName(String name) {
+        List<Client> clients = new ArrayList<>();
+
+        // Check cache first
+        clients.addAll(clientCache.values().stream()
                 .filter(client -> client.getName().equalsIgnoreCase(name))
-                .findFirst();
+                .collect(Collectors.toList())); // Use collect to gather into a list
+
+        // Query the database if needed
+        String query = "SELECT * FROM clients WHERE LOWER(name) = LOWER(?)"; // Using LOWER for case-insensitive search
+        try (Connection connection = DataBaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, name);
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                Client client = new Client(
+                        (UUID) resultSet.getObject("id"),
+                        resultSet.getString("name"),
+                        resultSet.getString("address"),
+                        resultSet.getString("phone"),
+                        resultSet.getBoolean("isProfessional")
+                );
+                clientCache.put(client.getId(), client); // Cache the client after retrieving from the database
+                clients.add(client);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return clients;
     }
 }

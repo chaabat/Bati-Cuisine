@@ -59,21 +59,36 @@ public class ConsoleUI {
         // Get the client
         Client client = null;
         System.out.println("--- Recherche de client ---");
-        System.out.print("Entrez le nom du client : ");
-        String clientName = scanner.nextLine();
+        System.out.println("Souhaitez-vous chercher un client existant ou en ajouter un nouveau ?");
+        System.out.println("1. Chercher un client existant");
+        System.out.println("2. Ajouter un nouveau client");
+        System.out.print("Choisissez une option : ");
 
-        Optional<Client> clientOpt = clientService.getClientByName(clientName);
-        if (clientOpt.isPresent()) {
-            client = clientOpt.get();
-            System.out.println("Client trouvé : " + client.getName());
-        } else {
-            System.out.println("Client non trouvé. Voulez-vous en ajouter un nouveau ? (y/n)");
-            if (scanner.nextLine().equalsIgnoreCase("y")) {
-                client = addNewClient(); // Assuming this method handles client creation
+        int clientChoice = readIntInRange(1, 2, "Option invalide. Veuillez réessayer.");
+        if (clientChoice == 1) {
+            System.out.print("Entrez le nom du client : ");
+            String clientName = scanner.nextLine();
+
+            List<Client> clients = clientService.getClientsByName(clientName);
+            if (!clients.isEmpty()) {
+                if (clients.size() == 1) {
+                    client = clients.get(0);
+                    System.out.println("Client trouvé : " + client.getName());
+                } else {
+                    System.out.println("Plusieurs clients trouvés :");
+                    for (int i = 0; i < clients.size(); i++) {
+                        System.out.println((i + 1) + ". " + clients.get(i).getName());
+                    }
+                    System.out.print("Veuillez sélectionner un client en entrant le numéro : ");
+                    int selectedIndex = readIntInRange(1, clients.size(), "Choix invalide. Veuillez réessayer.") - 1;
+                    client = clients.get(selectedIndex);
+                }
             } else {
-                System.out.println("Aucun client sélectionné. Annulation de la création du projet.");
+                System.out.println("Client non trouvé.");
                 return;
             }
+        } else {
+            client = addNewClient();
         }
 
         // Get project details
@@ -97,37 +112,65 @@ public class ConsoleUI {
         // Add the project to the repository
         projectService.addProject(newProject);
         System.out.println("Projet créé avec succès !");
+
+        // Add materials and labor
+        System.out.println("--- Ajout des matériaux ---");
+        addMaterials(newProject);
+        System.out.println("--- Ajout de la main-d'œuvre ---");
+        addLabor(newProject);
     }
 
+    private void addMaterials(Project project) {
+        boolean addMoreMaterials = true;
+        while (addMoreMaterials) {
+            System.out.print("Entrez le nom du matériau : ");
+            String materialName = scanner.nextLine();
+            System.out.print("Entrez la quantité de ce matériau : ");
+            BigDecimal quantity = readPositiveBigDecimal("Quantité invalide. Veuillez entrer une valeur positive : ");
+            System.out.print("Entrez le coût unitaire de ce matériau (€/unité) : ");
+            BigDecimal unitCost = readPositiveBigDecimal("Coût unitaire invalide. Veuillez entrer une valeur positive : ");
+            System.out.print("Entrez le coût de transport de ce matériau (€) : ");
+            BigDecimal transportCost = readPositiveBigDecimal("Coût de transport invalide. Veuillez entrer une valeur positive : ");
+            System.out.print("Entrez le coefficient de qualité du matériau : ");
+            BigDecimal qualityCoefficient = readPositiveBigDecimal("Coefficient invalide. Veuillez entrer une valeur positive : ");
 
+            Material material = new Material(
+                    UUID.randomUUID(), materialName, unitCost, quantity, new BigDecimal("0.20"), // Default taxRate
+                    project.getId(), qualityCoefficient, transportCost
+            );
 
+            materialService.addMaterial(material);
+            System.out.println("Matériau ajouté avec succès !");
 
-
-    private Client searchExistingClient() {
-        System.out.print("Entrez le nom du client : ");
-        String clientName = scanner.nextLine();
-        Optional<Client> clientOpt = clientService.getClientByName(clientName);
-
-        if (clientOpt.isPresent()) {
-            Client foundClient = clientOpt.get();
-            System.out.println("Client trouvé !");
-            System.out.println("Nom : " + foundClient.getName());
-            System.out.println("Adresse : " + foundClient.getAddress());
-            System.out.println("Numéro de téléphone : " + foundClient.getPhone());
-            System.out.print("Souhaitez-vous continuer avec ce client ? (y/n) : ");
-            if (scanner.nextLine().equalsIgnoreCase("y")) {
-                return foundClient;
-            } else {
-                System.out.println("Client non sélectionné.");
-            }
-        } else {
-            System.out.println("Client non trouvé.");
-            System.out.print("Souhaitez-vous ajouter un nouveau client ? (y/n) : ");
-            if (scanner.nextLine().equalsIgnoreCase("y")) {
-                return addNewClient();
-            }
+            System.out.print("Voulez-vous ajouter un autre matériau ? (oui/non) : ");
+            addMoreMaterials = scanner.nextLine().equalsIgnoreCase("oui");
         }
-        return null;
+    }
+
+    private void addLabor(Project project) {
+        boolean addMoreLabor = true;
+        while (addMoreLabor) {
+            System.out.print("Entrez le type de main-d'œuvre (e.g., Ouvrier de base) : ");
+            String laborType = scanner.nextLine();
+            System.out.print("Entrez le taux horaire de cette main-d'œuvre (€/h) : ");
+            BigDecimal hourlyRate = readPositiveBigDecimal("Taux horaire invalide. Veuillez entrer une valeur positive : ");
+            System.out.print("Entrez le nombre d'heures travaillées : ");
+            BigDecimal hoursWorked = readPositiveBigDecimal("Nombre d'heures invalide. Veuillez entrer une valeur positive : ");
+            System.out.print("Entrez le facteur de productivité (1.0 = standard, > 1.0 = haute productivité) : ");
+            BigDecimal productivityFactor = readPositiveBigDecimal("Facteur de productivité invalide. Veuillez entrer une valeur positive : ");
+
+            Labor labor = new Labor(
+                    UUID.randomUUID(), laborType, BigDecimal.ZERO, BigDecimal.ZERO, // Placeholder values
+                    new BigDecimal("0.20"), // Default taxRate
+                    project.getId(), hourlyRate, hoursWorked, productivityFactor
+            );
+
+            laborService.addLabor(labor);
+            System.out.println("Main-d'œuvre ajoutée avec succès !");
+
+            System.out.print("Voulez-vous ajouter un autre type de main-d'œuvre ? (oui/non) : ");
+            addMoreLabor = scanner.nextLine().equalsIgnoreCase("oui");
+        }
     }
 
     private Client addNewClient() {
@@ -145,66 +188,6 @@ public class ConsoleUI {
         clientService.addClient(newClient);
         System.out.println("Nouveau client ajouté avec succès !");
         return newClient;
-    }
-
-    private void addMaterials(Project project) {
-        boolean addMoreMaterials = true;
-        while (addMoreMaterials) {
-            System.out.print("Entrez le nom du matériau : ");
-            String materialName = scanner.nextLine();
-            System.out.print("Entrez la quantité de ce matériau : ");
-            BigDecimal quantity = readPositiveBigDecimal("Quantité invalide. Veuillez entrer une valeur positive : ");
-            System.out.print("Entrez le coût unitaire de ce matériau (€/unité) : ");
-            BigDecimal unitCost = readPositiveBigDecimal("Coût unitaire invalide. Veuillez entrer une valeur positive : ");
-            System.out.print("Entrez le coût de transport de ce matériau (€) : ");
-            BigDecimal transportCost = readPositiveBigDecimal("Coût de transport invalide. Veuillez entrer une valeur positive : ");
-
-            System.out.println("Choisissez le coefficient de qualité du matériau : ");
-            System.out.println("1. Standard (1.0)");
-            System.out.println("2. Haute qualité (1.5)");
-            int qualityChoice = readIntInRange(1, 2, "Choix invalide, veuillez entrer 1 ou 2 : ");
-            BigDecimal qualityCoefficient = (qualityChoice == 2) ? new BigDecimal("1.5") : BigDecimal.ONE;
-
-            BigDecimal taxRate = new BigDecimal("0.20"); // Example: 20% tax rate
-
-            Material material = new Material(
-                    UUID.randomUUID(), materialName, unitCost, quantity, taxRate,
-                    project.getId(), qualityCoefficient, transportCost
-            );
-
-            materialService.addMaterial(material);
-            System.out.println("Matériau ajouté avec succès !");
-
-            System.out.print("Voulez-vous ajouter un autre matériau ? (oui/non) : ");
-            addMoreMaterials = scanner.nextLine().equalsIgnoreCase("oui");
-        }
-    }
-
-    private void addLabor(Project project) {
-        boolean addMoreLabor = true;
-        while (addMoreLabor) {
-            System.out.print("Entrez le taux horaire de cette main-d'œuvre (€/h) : ");
-            BigDecimal hourlyRate = readPositiveBigDecimal("Taux horaire invalide. Veuillez entrer une valeur positive : ");
-            System.out.print("Entrez le nombre d'heures travaillées : ");
-            BigDecimal hoursWorked = readPositiveBigDecimal("Nombre d'heures invalide. Veuillez entrer une valeur positive : ");
-            System.out.print("Entrez le facteur de productivité (1.0 = standard, > 1.0 = haute productivité) : ");
-            BigDecimal productivityFactor = readPositiveBigDecimal("Facteur de productivité invalide. Veuillez entrer une valeur positive : ");
-
-            BigDecimal unitCost = BigDecimal.ZERO; // Placeholder
-            BigDecimal quantity = BigDecimal.ZERO; // Placeholder
-            BigDecimal taxRate = new BigDecimal("0.20"); // Example: 20% tax rate
-
-            Labor labor = new Labor(
-                    UUID.randomUUID(), "Default Labor", unitCost, quantity,
-                    taxRate, project.getId(), hourlyRate, hoursWorked, productivityFactor
-            );
-
-            laborService.addLabor(labor);
-            System.out.println("Main-d'œuvre ajoutée avec succès !");
-
-            System.out.print("Voulez-vous ajouter un autre type de main-d'œuvre ? (oui/non) : ");
-            addMoreLabor = scanner.nextLine().equalsIgnoreCase("oui");
-        }
     }
 
     private void viewExistingProjects() {

@@ -25,7 +25,6 @@ public class ClientService {
      * @param client the client to add
      */
     public void addClient(Client client) {
-        // Optionally, add validation or preprocessing here
         clientRepository.addClient(client);
     }
 
@@ -49,12 +48,12 @@ public class ClientService {
     }
 
     /**
-     * Get a client by name.
+     * Get clients by name, returning a list for potential duplicates.
      *
-     * @param name the name of the client
-     * @return an Optional containing the client if found, otherwise empty
+     * @param clientName the name of the client
+     * @return a list of clients matching the name
      */
-    public Optional<Client> getClientByName(String name) {
-        return clientRepository.getClientByName(name);
+    public List<Client> getClientsByName(String clientName) {
+        return clientRepository.getClientsByName(clientName);
     }
 }
