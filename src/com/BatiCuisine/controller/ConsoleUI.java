@@ -7,8 +7,6 @@ import com.BatiCuisine.service.MaterialService;
 import com.BatiCuisine.service.ProjectService;
 
 import java.math.BigDecimal;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class ConsoleUI {
@@ -16,17 +14,15 @@ public class ConsoleUI {
     private final ProjectService projectService;
     private final MaterialService materialService;
     private final LaborService laborService;
-    private final ClientService clientService; // Add this
+    private final ClientService clientService;
     private final Scanner scanner = new Scanner(System.in);
 
     public ConsoleUI(ProjectService projectService, MaterialService materialService, LaborService laborService, ClientService clientService) {
         this.projectService = projectService;
         this.materialService = materialService;
         this.laborService = laborService;
-        this.clientService = clientService; // Initialize this
+        this.clientService = clientService;
     }
-
-
 
     public void showMainMenu() {
         while (true) {
@@ -38,8 +34,7 @@ public class ConsoleUI {
             System.out.println("4. Quitter");
             System.out.print("Choisissez une option : ");
 
-            int choice = scanner.nextInt();
-            scanner.nextLine();  // Consume newline
+            int choice = readIntInRange(1, 4, "Option invalide. Veuillez réessayer.");
 
             switch (choice) {
                 case 1:
@@ -54,92 +49,82 @@ public class ConsoleUI {
                 case 4:
                     System.out.println("Merci d'avoir utilisé l'application!");
                     return;  // Exit the loop
-                default:
-                    System.out.println("Option invalide. Veuillez réessayer.");
             }
         }
     }
 
     private void createNewProject() {
-        System.out.println("--- Recherche de client ---");
-        System.out.println("Souhaitez-vous chercher un client existant ou en ajouter un nouveau ?");
-        System.out.println("1. Chercher un client existant");
-        System.out.println("2. Ajouter un nouveau client");
-        System.out.print("Choisissez une option : ");
-        int clientChoice = scanner.nextInt();
-        scanner.nextLine();  // Consume newline
-
-        Client client;
-        if (clientChoice == 1) {
-            client = searchExistingClient();
-        } else if (clientChoice == 2) {
-            client = createNewClient();
-        } else {
-            System.out.println("Option invalide.");
-            return;
-        }
-
-        if (client == null) {
-            System.out.println("Client non sélectionné.");
-            return;
-        }
-
         System.out.println("--- Création d'un Nouveau Projet ---");
+
+        // Get the client
+        Client client = null;
+        System.out.println("--- Recherche de client ---");
+        System.out.print("Entrez le nom du client : ");
+        String clientName = scanner.nextLine();
+
+        Optional<Client> clientOpt = clientService.getClientByName(clientName);
+        if (clientOpt.isPresent()) {
+            client = clientOpt.get();
+            System.out.println("Client trouvé : " + client.getName());
+        } else {
+            System.out.println("Client non trouvé. Voulez-vous en ajouter un nouveau ? (y/n)");
+            if (scanner.nextLine().equalsIgnoreCase("y")) {
+                client = addNewClient(); // Assuming this method handles client creation
+            } else {
+                System.out.println("Aucun client sélectionné. Annulation de la création du projet.");
+                return;
+            }
+        }
+
+        // Get project details
         System.out.print("Entrez le nom du projet : ");
         String projectName = scanner.nextLine();
         System.out.print("Entrez la marge bénéficiaire du projet (en %) : ");
-        BigDecimal projectMargin = scanner.nextBigDecimal();
+        BigDecimal projectMargin = readPositiveBigDecimal("Marge bénéficiaire invalide. Veuillez entrer une valeur positive : ");
         System.out.print("Entrez le coût total du projet : ");
-        BigDecimal totalCost = scanner.nextBigDecimal();
-        scanner.nextLine();  // Consume newline
+        BigDecimal totalCost = readPositiveBigDecimal("Coût total invalide. Veuillez entrer une valeur positive : ");
 
-        // Assuming ProjectStatus is an enum with a value of "IN_PROGRESS"
-        ProjectStatus status = ProjectStatus.IN_PROGRESS;
+        // Create the new project
+        Project newProject = new Project(
+                UUID.randomUUID(),
+                projectName,
+                projectMargin,
+                ProjectStatus.IN_PROGRESS,
+                totalCost,
+                client
+        );
 
-        Project newProject = new Project(projectName, projectMargin, status, totalCost, client);
-
-        // Handle materials and labor
-        System.out.println("--- Ajout des matériaux ---");
-        addMaterials(newProject);
-
-        System.out.println("--- Ajout de la main-d'œuvre ---");
-        addLabor(newProject);
-
-        // Add the project to the service
+        // Add the project to the repository
         projectService.addProject(newProject);
         System.out.println("Projet créé avec succès !");
     }
 
-    private Client createNewClient() {
-        return null; // This method should have logic to create and return a new client
-    }
+
+
+
 
     private Client searchExistingClient() {
         System.out.print("Entrez le nom du client : ");
         String clientName = scanner.nextLine();
+        Optional<Client> clientOpt = clientService.getClientByName(clientName);
 
-        // Fetch client using the service instance
-        Optional<Client> client = clientService.getClientByName(clientName);
-
-        if (client.isPresent()) {
-            Client foundClient = client.get();
+        if (clientOpt.isPresent()) {
+            Client foundClient = clientOpt.get();
             System.out.println("Client trouvé !");
             System.out.println("Nom : " + foundClient.getName());
             System.out.println("Adresse : " + foundClient.getAddress());
             System.out.println("Numéro de téléphone : " + foundClient.getPhone());
             System.out.print("Souhaitez-vous continuer avec ce client ? (y/n) : ");
-
             if (scanner.nextLine().equalsIgnoreCase("y")) {
                 return foundClient;
             } else {
-                System.out.println("Client non sélectionné. Retour au menu.");
+                System.out.println("Client non sélectionné.");
             }
         } else {
             System.out.println("Client non trouvé.");
-            // Optional: Ask if user wants to add a new client
             System.out.print("Souhaitez-vous ajouter un nouveau client ? (y/n) : ");
             if (scanner.nextLine().equalsIgnoreCase("y")) {
-                return addNewClient(); // Updated to call the method to add a new client
+                return addNewClient();
             }
         }
         return null;
@@ -156,8 +141,8 @@ public class ConsoleUI {
         boolean isProfessional = scanner.nextBoolean();
         scanner.nextLine();  // Consume newline
 
-        Client newClient = new Client(clientName, clientAddress, clientPhone, isProfessional);
-        clientService.addClient(newClient); // Use the instance method
+        Client newClient = new Client(UUID.randomUUID(), clientName, clientAddress, clientPhone, isProfessional);
+        clientService.addClient(newClient);
         System.out.println("Nouveau client ajouté avec succès !");
         return newClient;
     }
@@ -168,24 +153,30 @@ public class ConsoleUI {
             System.out.print("Entrez le nom du matériau : ");
             String materialName = scanner.nextLine();
             System.out.print("Entrez la quantité de ce matériau : ");
-            BigDecimal quantity = scanner.nextBigDecimal();
+            BigDecimal quantity = readPositiveBigDecimal("Quantité invalide. Veuillez entrer une valeur positive : ");
             System.out.print("Entrez le coût unitaire de ce matériau (€/unité) : ");
-            BigDecimal unitCost = scanner.nextBigDecimal();
+            BigDecimal unitCost = readPositiveBigDecimal("Coût unitaire invalide. Veuillez entrer une valeur positive : ");
             System.out.print("Entrez le coût de transport de ce matériau (€) : ");
-            BigDecimal transportCost = scanner.nextBigDecimal();
-            System.out.print("Entrez le coefficient de qualité du matériau (1.0 = standard, > 1.0 = haute qualité) : ");
-            BigDecimal qualityCoefficient = scanner.nextBigDecimal();
-            scanner.nextLine();  // Consume newline
+            BigDecimal transportCost = readPositiveBigDecimal("Coût de transport invalide. Veuillez entrer une valeur positive : ");
 
-            // Assuming taxRate should be zero for this use case
-            BigDecimal taxRate = BigDecimal.ZERO;
-            Material material = new Material(materialName, unitCost, quantity, taxRate, project.getId(), qualityCoefficient, transportCost);
+            System.out.println("Choisissez le coefficient de qualité du matériau : ");
+            System.out.println("1. Standard (1.0)");
+            System.out.println("2. Haute qualité (1.5)");
+            int qualityChoice = readIntInRange(1, 2, "Choix invalide, veuillez entrer 1 ou 2 : ");
+            BigDecimal qualityCoefficient = (qualityChoice == 2) ? new BigDecimal("1.5") : BigDecimal.ONE;
+
+            BigDecimal taxRate = new BigDecimal("0.20"); // Example: 20% tax rate
+
+            Material material = new Material(
+                    UUID.randomUUID(), materialName, unitCost, quantity, taxRate,
+                    project.getId(), qualityCoefficient, transportCost
+            );
+
             materialService.addMaterial(material);
-            project.addMaterial(material);
             System.out.println("Matériau ajouté avec succès !");
 
-            System.out.print("Voulez-vous ajouter un autre matériau ? (y/n) : ");
-            addMoreMaterials = scanner.nextLine().equalsIgnoreCase("y");
+            System.out.print("Voulez-vous ajouter un autre matériau ? (oui/non) : ");
+            addMoreMaterials = scanner.nextLine().equalsIgnoreCase("oui");
         }
     }
 
@@ -193,20 +184,26 @@ public class ConsoleUI {
         boolean addMoreLabor = true;
         while (addMoreLabor) {
             System.out.print("Entrez le taux horaire de cette main-d'œuvre (€/h) : ");
-            BigDecimal hourlyRate = scanner.nextBigDecimal();
+            BigDecimal hourlyRate = readPositiveBigDecimal("Taux horaire invalide. Veuillez entrer une valeur positive : ");
             System.out.print("Entrez le nombre d'heures travaillées : ");
-            BigDecimal hoursWorked = scanner.nextBigDecimal();
+            BigDecimal hoursWorked = readPositiveBigDecimal("Nombre d'heures invalide. Veuillez entrer une valeur positive : ");
             System.out.print("Entrez le facteur de productivité (1.0 = standard, > 1.0 = haute productivité) : ");
-            BigDecimal productivityFactor = scanner.nextBigDecimal();
-            scanner.nextLine();  // Consume newline
+            BigDecimal productivityFactor = readPositiveBigDecimal("Facteur de productivité invalide. Veuillez entrer une valeur positive : ");
 
-            Labor labor = new Labor(hourlyRate, hoursWorked, productivityFactor);
+            BigDecimal unitCost = BigDecimal.ZERO; // Placeholder
+            BigDecimal quantity = BigDecimal.ZERO; // Placeholder
+            BigDecimal taxRate = new BigDecimal("0.20"); // Example: 20% tax rate
+
+            Labor labor = new Labor(
+                    UUID.randomUUID(), "Default Labor", unitCost, quantity,
+                    taxRate, project.getId(), hourlyRate, hoursWorked, productivityFactor
+            );
+
             laborService.addLabor(labor);
-            project.addLabor(labor);
             System.out.println("Main-d'œuvre ajoutée avec succès !");
 
-            System.out.print("Voulez-vous ajouter un autre type de main-d'œuvre ? (y/n) : ");
-            addMoreLabor = scanner.nextLine().equalsIgnoreCase("y");
+            System.out.print("Voulez-vous ajouter un autre type de main-d'œuvre ? (oui/non) : ");
+            addMoreLabor = scanner.nextLine().equalsIgnoreCase("oui");
         }
     }
 
@@ -228,12 +225,10 @@ public class ConsoleUI {
         Optional<Project> projectOpt = projectService.getProjectById(UUID.fromString(projectId));
         if (projectOpt.isPresent()) {
             Project project = projectOpt.get();
-
             System.out.print("Entrez le taux de TVA en pourcentage : ");
-            BigDecimal vatRate = scanner.nextBigDecimal();
+            BigDecimal vatRate = readPositiveBigDecimal("Taux de TVA invalide. Veuillez entrer une valeur positive : ");
             System.out.print("Entrez la marge bénéficiaire en pourcentage : ");
-            BigDecimal profitMargin = scanner.nextBigDecimal();
-            scanner.nextLine();  // Consume newline
+            BigDecimal profitMargin = readPositiveBigDecimal("Marge bénéficiaire invalide. Veuillez entrer une valeur positive : ");
 
             BigDecimal totalCost = projectService.calculateTotalProjectCost(project, vatRate, profitMargin);
             projectService.displayProjectCostDetails(project, totalCost);
@@ -242,4 +237,39 @@ public class ConsoleUI {
         }
     }
 
+    private BigDecimal readPositiveBigDecimal(String errorMessage) {
+        BigDecimal value;
+        while (true) {
+            try {
+                value = scanner.nextBigDecimal();
+                if (value.compareTo(BigDecimal.ZERO) > 0) {
+                    scanner.nextLine();  // Consume the newline
+                    return value;
+                } else {
+                    System.out.print(errorMessage);
+                }
+            } catch (InputMismatchException e) {
+                System.out.print(errorMessage);
+                scanner.nextLine();  // Consume the invalid input
+            }
+        }
+    }
+
+    private int readIntInRange(int min, int max, String errorMessage) {
+        int choice;
+        while (true) {
+            try {
+                choice = scanner.nextInt();
+                scanner.nextLine();  // Consume the newline
+                if (choice >= min && choice <= max) {
+                    return choice;
+                } else {
+                    System.out.print(errorMessage);
+                }
+            } catch (InputMismatchException e) {
+                System.out.print(errorMessage);
+                scanner.nextLine();  // Consume the invalid input
+            }
+        }
+    }
 }

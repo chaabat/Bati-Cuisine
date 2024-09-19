@@ -1,7 +1,5 @@
 package com.BatiCuisine.model;
 
-import com.BatiCuisine.model.Material;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,27 +7,15 @@ import java.util.Objects;
 import java.util.UUID;
 
 public class Project {
-    private UUID id;
-    private String projectName;
-    private BigDecimal projectMargin;
-    private BigDecimal totalCost;
-    private ProjectStatus projectStatus;
-    private Client client;
-    private List<Material> materials;  // Add this line
-    private List<Labor> labors;        // Add this line
-    private BigDecimal surface;        // If surface is needed
-
-    // Constructor for creating a new Project (without ID)
-    public Project(String projectName, BigDecimal projectMargin, ProjectStatus projectStatus, BigDecimal totalCost, Client client) {
-        this.id = UUID.randomUUID();
-        this.projectName = projectName;
-        this.projectMargin = projectMargin;
-        this.projectStatus = projectStatus;
-        this.totalCost = totalCost;
-        this.client = client;
-        this.materials = new ArrayList<>(); // Initialize the materials list
-        this.labors = new ArrayList<>();    // Initialize the labors list
-    }
+    private UUID id;                     // Project ID
+    private String projectName;          // Name of the project
+    private BigDecimal projectMargin;     // Profit margin
+    private BigDecimal totalCost;        // Total cost of the project
+    private ProjectStatus projectStatus; // Current status of the project
+    private Client client;               // Associated client
+    private List<Material> materials;    // List of materials
+    private List<Labor> labors;          // List of labor
+    private BigDecimal surface;          // Surface area (if applicable)
 
     // Constructor for initializing a Project from the database (with ID)
     public Project(UUID id, String projectName, BigDecimal projectMargin, ProjectStatus projectStatus, BigDecimal totalCost, Client client) {
@@ -39,8 +25,13 @@ public class Project {
         this.projectStatus = projectStatus;
         this.totalCost = totalCost;
         this.client = client;
-        this.materials = new ArrayList<>(); // Initialize the materials list
-        this.labors = new ArrayList<>();    // Initialize the labors list
+        this.materials = new ArrayList<>(); // Initialize empty lists
+        this.labors = new ArrayList<>();
+    }
+
+    // Constructor for creating a new Project (without ID)
+    public Project(String projectName, BigDecimal projectMargin, ProjectStatus projectStatus, BigDecimal totalCost, Client client) {
+        this(UUID.randomUUID(), projectName, projectMargin, projectStatus, totalCost, client);
     }
 
     // Getters & Setters
@@ -116,6 +107,16 @@ public class Project {
         this.surface = surface;
     }
 
+    // Add a material to the project
+    public void addMaterial(Material material) {
+        this.materials.add(material);
+    }
+
+    // Add labor to the project
+    public void addLabor(Labor labor) {
+        this.labors.add(labor);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -150,19 +151,5 @@ public class Project {
                 ", labors=" + labors +
                 ", surface=" + surface +
                 '}';
-    }
-
-    public void addMaterial(Material material) {
-        if (this.materials == null) {
-            this.materials = new ArrayList<>();
-        }
-        this.materials.add(material);
-    }
-
-    public void addLabor(Labor labor) {
-        if (this.labors == null) {
-            this.labors = new ArrayList<>();
-        }
-        this.labors.add(labor);
     }
 }

@@ -13,8 +13,8 @@ import java.util.UUID;
 
 public class ProjectService {
     private final ProjectRepository projectRepository;
-    private final MaterialService materialService;  // Ensure this is initialized
-    private final LaborService laborService;        // Ensure this is initialized
+    private final MaterialService materialService;
+    private final LaborService laborService;
 
     /**
      * Constructor to inject ProjectRepository, MaterialService, and LaborService dependencies.
@@ -35,7 +35,11 @@ public class ProjectService {
      * @param project The project to add.
      */
     public void addProject(Project project) {
-        projectRepository.addProject(project);
+        // Validate project before adding
+        if (project == null) {
+            throw new IllegalArgumentException("Project cannot be null");
+        }
+        projectRepository.addProject(project);  // Fixed: Use the instance variable, not static call
     }
 
     /**
@@ -45,6 +49,9 @@ public class ProjectService {
      * @return An Optional containing the project if found, or empty if not.
      */
     public Optional<Project> getProjectById(UUID id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Project ID cannot be null");
+        }
         return projectRepository.getProjectById(id);
     }
 
@@ -66,7 +73,11 @@ public class ProjectService {
      * @return The final total cost of the project.
      */
     public BigDecimal calculateTotalProjectCost(Project project, BigDecimal vatRate, BigDecimal profitMargin) {
-        // Ensure project has materials and labor
+        if (project == null) {
+            throw new IllegalArgumentException("Project cannot be null");
+        }
+
+        // Initialize materials and labor lists if null
         if (project.getMaterials() == null) {
             project.setMaterials(new ArrayList<>());
         }
@@ -74,6 +85,7 @@ public class ProjectService {
             project.setLabors(new ArrayList<>());
         }
 
+        // Calculate costs
         BigDecimal totalMaterialCost = materialService.calculateTotalMaterialCost(project.getMaterials());
         BigDecimal totalLaborCost = laborService.calculateTotalLaborCost(project.getLabors());
 
@@ -94,15 +106,16 @@ public class ProjectService {
      * @param totalCost The total cost of the project.
      */
     public void displayProjectCostDetails(Project project, BigDecimal totalCost) {
+        if (project == null) {
+            throw new IllegalArgumentException("Project cannot be null");
+        }
+
         System.out.println("--- Résultat du Calcul ---");
         System.out.println("Nom du projet : " + project.getProjectName());
         System.out.println("Client : " + project.getClient().getName());
         System.out.println("Adresse du chantier : " + project.getClient().getAddress());
         System.out.println("Surface : " + project.getSurface() + " m²");
-
         System.out.println("--- Détail des Coûts ---");
         System.out.println("Coût total final du projet : " + totalCost + " €");
     }
-
-
 }

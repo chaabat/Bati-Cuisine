@@ -4,6 +4,7 @@ import com.BatiCuisine.model.Material;
 import com.BatiCuisine.repository.interfaces.MaterialRepository;
 import com.BatiCuisine.config.DataBaseConnection;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,13 +15,33 @@ public class MaterialRepositoryImpl implements MaterialRepository {
 
     @Override
     public void addMaterial(Material material) {
-        String query = "INSERT INTO materials (componentId, qualityCoefficient, transportCost) VALUES (uuid_generate_v4(), ?, ?)";
-        try (Connection connection = DataBaseConnection.getInstance().getConnection();
-             PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setBigDecimal(1, material.getQualityCoefficient());  // Use BigDecimal for precision
-            statement.setBigDecimal(2, material.getTransportCost());       // Use BigDecimal for precision
+        String insertComponentQuery = "INSERT INTO component (name, unitCost, quantity, componentType, taxRate, projectId) VALUES (?, ?, ?, 'Material', ?, ?) RETURNING id";
+        String insertMaterialQuery = "INSERT INTO materials (componentId, qualityCoefficient, transportCost) VALUES (?, ?, ?)";
 
-            statement.executeUpdate();
+        try (Connection connection = DataBaseConnection.getInstance().getConnection();
+             PreparedStatement insertComponentStmt = connection.prepareStatement(insertComponentQuery);
+             PreparedStatement insertMaterialStmt = connection.prepareStatement(insertMaterialQuery)) {
+
+            // Set parameters for the component insertion
+            insertComponentStmt.setString(1, material.getName());
+            insertComponentStmt.setBigDecimal(2, material.getUnitCost());
+            insertComponentStmt.setBigDecimal(3, material.getQuantity());
+            insertComponentStmt.setBigDecimal(4, material.getTaxRate());
+            insertComponentStmt.setObject(5, material.getProjectId(), java.sql.Types.OTHER);
+
+            // Execute component insertion and get the generated componentId
+            ResultSet resultSet = insertComponentStmt.executeQuery();
+            if (resultSet.next()) {
+                UUID componentId = (UUID) resultSet.getObject("id");
+
+                // Set parameters for the material insertion
+                insertMaterialStmt.setObject(1, componentId, java.sql.Types.OTHER);
+                insertMaterialStmt.setBigDecimal(2, material.getQualityCoefficient());
+                insertMaterialStmt.setBigDecimal(3, material.getTransportCost());
+
+                // Execute material insertion
+                insertMaterialStmt.executeUpdate();
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -28,22 +49,23 @@ public class MaterialRepositoryImpl implements MaterialRepository {
 
     @Override
     public Optional<Material> getMaterialById(UUID id) {
-        String query = "SELECT * FROM materials WHERE componentId = ?";
+        String query = "SELECT c.id AS componentId, c.name, c.unitCost, c.quantity, c.taxRate, c.projectId, m.qualityCoefficient, m.transportCost " +
+                "FROM component c JOIN materials m ON c.id = m.componentId WHERE c.id = ?";
         try (Connection connection = DataBaseConnection.getInstance().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setObject(1, id, java.sql.Types.OTHER);  // Set UUID as parameter
+            statement.setObject(1, id, java.sql.Types.OTHER);
 
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
                 Material material = new Material(
-                        (UUID) resultSet.getObject("componentId"),  // UUID
-                        resultSet.getString("name"),  // Assuming 'name' is part of Component
-                        resultSet.getBigDecimal("unitCost"),  // Assuming 'unitCost' is part of Component
-                        resultSet.getBigDecimal("quantity"),  // Assuming 'quantity' is part of Component
-                        resultSet.getBigDecimal("taxRate"),  // Assuming 'taxRate' is part of Component
-                        (UUID) resultSet.getObject("projectId"),  // UUID
-                        resultSet.getBigDecimal("qualityCoefficient"),  // BigDecimal
-                        resultSet.getBigDecimal("transportCost")  // BigDecimal
+                        (UUID) resultSet.getObject("componentId"),
+                        resultSet.getString("name"),
+                        resultSet.getBigDecimal("unitCost"),
+                        resultSet.getBigDecimal("quantity"),
+                        resultSet.getBigDecimal("taxRate"),
+                        (UUID) resultSet.getObject("projectId"),
+                        resultSet.getBigDecimal("qualityCoefficient"),
+                        resultSet.getBigDecimal("transportCost")
                 );
                 return Optional.of(material);
             }
@@ -53,26 +75,25 @@ public class MaterialRepositoryImpl implements MaterialRepository {
         return Optional.empty();
     }
 
-
     @Override
     public List<Material> getAllMaterials() {
         List<Material> materials = new ArrayList<>();
-        String query = "SELECT * FROM materials";
+        String query = "SELECT c.id AS componentId, c.name, c.unitCost, c.quantity, c.taxRate, c.projectId, m.qualityCoefficient, m.transportCost " +
+                "FROM component c JOIN materials m ON c.id = m.componentId";
         try (Connection connection = DataBaseConnection.getInstance().getConnection();
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(query)) {
 
             while (resultSet.next()) {
-                // Create a Material object using the constructor that matches the parameters
                 Material material = new Material(
-                        (UUID) resultSet.getObject("componentId"),  // UUID
-                        resultSet.getString("name"),  // Assuming 'name' is part of Component
-                        resultSet.getBigDecimal("unitCost"),  // Assuming 'unitCost' is part of Component
-                        resultSet.getBigDecimal("quantity"),  // Assuming 'quantity' is part of Component
-                        resultSet.getBigDecimal("taxRate"),  // Assuming 'taxRate' is part of Component
-                        (UUID) resultSet.getObject("projectId"),  // UUID
-                        resultSet.getBigDecimal("qualityCoefficient"),  // BigDecimal
-                        resultSet.getBigDecimal("transportCost")  // BigDecimal
+                        (UUID) resultSet.getObject("componentId"),
+                        resultSet.getString("name"),
+                        resultSet.getBigDecimal("unitCost"),
+                        resultSet.getBigDecimal("quantity"),
+                        resultSet.getBigDecimal("taxRate"),
+                        (UUID) resultSet.getObject("projectId"),
+                        resultSet.getBigDecimal("qualityCoefficient"),
+                        resultSet.getBigDecimal("transportCost")
                 );
                 materials.add(material);
             }
@@ -82,8 +103,52 @@ public class MaterialRepositoryImpl implements MaterialRepository {
         return materials;
     }
 
+    @Override
+    public void updateMaterial(Material material) {
+        String updateComponentQuery = "UPDATE component SET name = ?, unitCost = ?, quantity = ?, taxRate = ?, projectId = ? WHERE id = ?";
+        String updateMaterialQuery = "UPDATE materials SET qualityCoefficient = ?, transportCost = ? WHERE componentId = ?";
 
+        try (Connection connection = DataBaseConnection.getInstance().getConnection();
+             PreparedStatement componentStatement = connection.prepareStatement(updateComponentQuery);
+             PreparedStatement materialStatement = connection.prepareStatement(updateMaterialQuery)) {
 
+            // Update component table
+            componentStatement.setString(1, material.getName());
+            componentStatement.setBigDecimal(2, material.getUnitCost());
+            componentStatement.setBigDecimal(3, material.getQuantity());
+            componentStatement.setBigDecimal(4, material.getTaxRate());
+            componentStatement.setObject(5, material.getProjectId(), java.sql.Types.OTHER);
+            componentStatement.setObject(6, material.getId(), java.sql.Types.OTHER); // Use the material's component ID
+            componentStatement.executeUpdate();
 
+            // Update materials table
+            materialStatement.setBigDecimal(1, material.getQualityCoefficient());
+            materialStatement.setBigDecimal(2, material.getTransportCost());
+            materialStatement.setObject(3, material.getId(), java.sql.Types.OTHER); // Use the material's component ID
+            materialStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
+    @Override
+    public void deleteMaterial(UUID componentId) {
+        String deleteMaterialQuery = "DELETE FROM materials WHERE componentId = ?";
+        String deleteComponentQuery = "DELETE FROM component WHERE id = ?";
+
+        try (Connection connection = DataBaseConnection.getInstance().getConnection();
+             PreparedStatement materialStatement = connection.prepareStatement(deleteMaterialQuery);
+             PreparedStatement componentStatement = connection.prepareStatement(deleteComponentQuery)) {
+
+            // Delete from materials table
+            materialStatement.setObject(1, componentId, java.sql.Types.OTHER);
+            materialStatement.executeUpdate();
+
+            // Delete from component table
+            componentStatement.setObject(1, componentId, java.sql.Types.OTHER);
+            componentStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }

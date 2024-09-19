@@ -7,21 +7,14 @@ public class Material extends Component {
     private BigDecimal qualityCoefficient;
     private BigDecimal transportCost;
 
-    // Constructor with UUID (for material fetched from the database)
+    // Constructor
     public Material(UUID componentId, String name, BigDecimal unitCost, BigDecimal quantity, BigDecimal taxRate, UUID projectId, BigDecimal qualityCoefficient, BigDecimal transportCost) {
         super(componentId, name, unitCost, quantity, taxRate, projectId);
         this.qualityCoefficient = qualityCoefficient;
         this.transportCost = transportCost;
     }
 
-    // Constructor without UUID (for new material)
-    public Material(String name, BigDecimal unitCost, BigDecimal quantity, BigDecimal taxRate, UUID projectId, BigDecimal qualityCoefficient, BigDecimal transportCost) {
-        super(null, name, unitCost, quantity, taxRate, projectId);  // Pass null for UUID
-        this.qualityCoefficient = qualityCoefficient;
-        this.transportCost = transportCost;
-    }
-
-    // Getters & Setters
+    // Getters and Setters
     public BigDecimal getQualityCoefficient() {
         return qualityCoefficient;
     }
@@ -36,19 +29,5 @@ public class Material extends Component {
 
     public void setTransportCost(BigDecimal transportCost) {
         this.transportCost = transportCost;
-    }
-
-    @Override
-    public String toString() {
-        return "Material{" +
-                "componentId=" + getComponentId() +
-                ", name='" + getName() + '\'' +
-                ", unitCost=" + getUnitCost() +
-                ", quantity=" + getQuantity() +
-                ", taxRate=" + getTaxRate() +
-                ", projectId=" + getProjectId() +
-                ", qualityCoefficient=" + qualityCoefficient +
-                ", transportCost=" + transportCost +
-                '}';
     }
 }

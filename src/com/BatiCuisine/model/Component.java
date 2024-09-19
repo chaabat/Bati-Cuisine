@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public class Component {
-    private UUID componentId;
+    private UUID id;
     private String name;
     private BigDecimal unitCost;
     private BigDecimal quantity;
@@ -13,7 +13,7 @@ public class Component {
 
     // Constructor
     public Component(UUID componentId, String name, BigDecimal unitCost, BigDecimal quantity, BigDecimal taxRate, UUID projectId) {
-        this.componentId = componentId;
+        this.id = componentId;  // Assigning the parameter to the instance variable
         this.name = name;
         this.unitCost = unitCost;
         this.quantity = quantity;
@@ -22,12 +22,12 @@ public class Component {
     }
 
     // Getters and Setters
-    public UUID getComponentId() {
-        return componentId;
+    public UUID getId() {
+        return id;
     }
 
-    public void setComponentId(UUID componentId) {
-        this.componentId = componentId;
+    public void setId(UUID id) {
+        this.id = id;
     }
 
     public String getName() {

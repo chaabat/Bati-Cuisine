@@ -6,29 +6,32 @@ import com.BatiCuisine.config.DataBaseConnection;
 
 import java.sql.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class ClientRepositoryImpl implements ClientRepository {
     private final Map<UUID, Client> clientCache = new HashMap<>(); // In-memory cache
-    private static final String UUID_TYPE = "uuid";
 
     @Override
     public void addClient(Client client) {
-        String query = "INSERT INTO clients (id, name, address, phone, isProfessional) VALUES (uuid_generate_v4(), ?, ?, ?, ?)";  // Include ID generation
+        String query = "INSERT INTO clients (name, address, phone, isProfessional) VALUES (?, ?, ?, ?) RETURNING id";
         try (Connection connection = DataBaseConnection.getInstance().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, client.getName());
             statement.setString(2, client.getAddress());
             statement.setString(3, client.getPhone());
             statement.setBoolean(4, client.isProfessional());
-            statement.executeUpdate();
 
-            // Update cache after adding
-            loadClientToCache(client.getId());
+            // Execute the insert and retrieve the generated client ID
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                UUID generatedId = (UUID) resultSet.getObject("id");
+                client.setId(generatedId);  // Set the ID back to the client object
+                clientCache.put(generatedId, client); // Cache the client
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+
 
     @Override
     public Optional<Client> getClientById(UUID id) {
@@ -39,18 +42,18 @@ public class ClientRepositoryImpl implements ClientRepository {
         String query = "SELECT * FROM clients WHERE id = ?";
         try (Connection connection = DataBaseConnection.getInstance().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setObject(1, id, Types.OTHER);  // Use setObject() for UUID
+            statement.setObject(1, id, Types.OTHER);
             ResultSet resultSet = statement.executeQuery();
 
             if (resultSet.next()) {
                 Client client = new Client(
-                        (UUID) resultSet.getObject("id"),  // Retrieve UUID from the database
+                        (UUID) resultSet.getObject("id"),
                         resultSet.getString("name"),
                         resultSet.getString("address"),
                         resultSet.getString("phone"),
                         resultSet.getBoolean("isProfessional")
                 );
-                clientCache.put(id, client);  // Cache the client
+                clientCache.put(id, client);
                 return Optional.of(client);
             }
         } catch (SQLException e) {
@@ -69,27 +72,5 @@ public class ClientRepositoryImpl implements ClientRepository {
         return clientCache.values().stream()
                 .filter(client -> client.getName().equalsIgnoreCase(name))
                 .findFirst();
-    }
-
-    private void loadClientToCache(UUID id) {
-        String query = "SELECT * FROM clients WHERE id = ?";
-        try (Connection connection = DataBaseConnection.getInstance().getConnection();
-             PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setObject(1, id, Types.OTHER);  // Use setObject() for UUID
-            ResultSet resultSet = statement.executeQuery();
-
-            if (resultSet.next()) {
-                Client client = new Client(
-                        (UUID) resultSet.getObject("id"),
-                        resultSet.getString("name"),
-                        resultSet.getString("address"),
-                        resultSet.getString("phone"),
-                        resultSet.getBoolean("isProfessional")
-                );
-                clientCache.put(id, client);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
     }
 }

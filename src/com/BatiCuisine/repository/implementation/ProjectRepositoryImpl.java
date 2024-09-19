@@ -15,21 +15,28 @@ public class ProjectRepositoryImpl implements ProjectRepository {
 
     @Override
     public void addProject(Project project) {
-        String query = "INSERT INTO projects (id, projectName, profitMargin, totalCost, status, clientId) VALUES (uuid_generate_v4(), ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO projects (id, projectName, profitMargin, totalCost, status, clientId) VALUES (?, ?, ?, ?, ?, ?)";
+
         try (Connection connection = DataBaseConnection.getInstance().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setString(1, project.getProjectName());
-            statement.setBigDecimal(2, project.getProjectMargin());
-            statement.setBigDecimal(3, project.getTotalCost());
-            statement.setString(4, project.getProjectStatus().name());  // Enum as String
-            statement.setObject(5, project.getClient().getId(), Types.OTHER);  // Client UUID
 
+            UUID projectId = project.getId() != null ? project.getId() : UUID.randomUUID();
+            project.setId(projectId);
+
+            // Set parameters for the prepared statement
+            statement.setObject(1, projectId, Types.OTHER);
+            statement.setString(2, project.getProjectName());
+            statement.setBigDecimal(3, project.getProjectMargin());
+            statement.setBigDecimal(4, project.getTotalCost());
+            statement.setObject(5, project.getProjectStatus().name(), Types.OTHER);
+            statement.setObject(6, project.getClient().getId(), Types.OTHER);
+
+            // Execute the query
             statement.executeUpdate();
-            // Cache the project after inserting
-            projectCache.put(project.getId(), project);
+            projectCache.put(projectId, project);
+
         } catch (SQLException e) {
             e.printStackTrace();
-            // Consider logging and/or rethrowing the exception
         }
     }
 
@@ -39,20 +46,21 @@ public class ProjectRepositoryImpl implements ProjectRepository {
             return Optional.of(projectCache.get(id));
         }
 
-        String query = "SELECT p.*, c.name as clientName, c.address as clientAddress, c.phone as clientPhone, c.isProfessional FROM projects p JOIN clients c ON p.clientId = c.id WHERE p.id = ?";
+        String query = "SELECT p.*, c.name AS clientName, c.address AS clientAddress, c.phone AS clientPhone, c.isProfessional " +
+                "FROM projects p JOIN clients c ON p.clientId = c.id WHERE p.id = ?";
         try (Connection connection = DataBaseConnection.getInstance().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setObject(1, id, Types.OTHER);  // Set UUID as parameter
-
+            statement.setObject(1, id, Types.OTHER);
             ResultSet resultSet = statement.executeQuery();
+
             if (resultSet.next()) {
                 Project project = new Project(
-                        (UUID) resultSet.getObject("id"),  // UUID
+                        (UUID) resultSet.getObject("id"),
                         resultSet.getString("projectName"),
-                        resultSet.getBigDecimal("profitMargin"),  // BigDecimal
-                        ProjectStatus.valueOf(resultSet.getString("status")),  // Enum status
-                        resultSet.getBigDecimal("totalCost"),  // BigDecimal
-                        new Client(  // Build Client object from resultSet
+                        resultSet.getBigDecimal("profitMargin"),
+                        ProjectStatus.valueOf(resultSet.getString("status")),
+                        resultSet.getBigDecimal("totalCost"),
+                        new Client(
                                 (UUID) resultSet.getObject("clientId"),
                                 resultSet.getString("clientName"),
                                 resultSet.getString("clientAddress"),
@@ -60,13 +68,11 @@ public class ProjectRepositoryImpl implements ProjectRepository {
                                 resultSet.getBoolean("isProfessional")
                         )
                 );
-                // Cache the project
                 projectCache.put(project.getId(), project);
                 return Optional.of(project);
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            // Consider logging and/or rethrowing the exception
         }
         return Optional.empty();
     }
@@ -74,19 +80,20 @@ public class ProjectRepositoryImpl implements ProjectRepository {
     @Override
     public List<Project> getAllProjects() {
         List<Project> projects = new ArrayList<>();
-        String query = "SELECT p.*, c.name as clientName, c.address as clientAddress, c.phone as clientPhone, c.isProfessional FROM projects p JOIN clients c ON p.clientId = c.id";
+        String query = "SELECT p.*, c.name AS clientName, c.address AS clientAddress, c.phone AS clientPhone, c.isProfessional " +
+                "FROM projects p JOIN clients c ON p.clientId = c.id";
         try (Connection connection = DataBaseConnection.getInstance().getConnection();
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(query)) {
 
             while (resultSet.next()) {
                 Project project = new Project(
-                        (UUID) resultSet.getObject("id"),  // UUID
+                        (UUID) resultSet.getObject("id"),
                         resultSet.getString("projectName"),
-                        resultSet.getBigDecimal("profitMargin"),  // BigDecimal
-                        ProjectStatus.valueOf(resultSet.getString("status")),  // Enum status
-                        resultSet.getBigDecimal("totalCost"),  // BigDecimal
-                        new Client(  // Build Client object from resultSet
+                        resultSet.getBigDecimal("profitMargin"),
+                        ProjectStatus.valueOf(resultSet.getString("status")),
+                        resultSet.getBigDecimal("totalCost"),
+                        new Client(
                                 (UUID) resultSet.getObject("clientId"),
                                 resultSet.getString("clientName"),
                                 resultSet.getString("clientAddress"),
@@ -94,13 +101,11 @@ public class ProjectRepositoryImpl implements ProjectRepository {
                                 resultSet.getBoolean("isProfessional")
                         )
                 );
-                // Cache the project
                 projectCache.put(project.getId(), project);
                 projects.add(project);
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            // Consider logging and/or rethrowing the exception
         }
         return projects;
     }
