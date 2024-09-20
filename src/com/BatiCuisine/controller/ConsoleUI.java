@@ -89,7 +89,6 @@ public class ConsoleUI {
                         System.out.println((i + 1) + ". " + foundClient.getName());
                         System.out.println("   Adresse : " + foundClient.getAddress());
                         System.out.println("   Numéro de téléphone : " + foundClient.getPhone());
-
                     }
                     System.out.print("Veuillez sélectionner un client en entrant le numéro : ");
                     int selectedIndex = readIntInRange(1, clients.size(), "Choix invalide. Veuillez réessayer.") - 1;
@@ -103,9 +102,19 @@ public class ConsoleUI {
             client = addNewClient();
         }
 
+        // Get project type
+        System.out.println("Choisissez le type de projet :");
+        System.out.println("1. Rénovation");
+        System.out.println("2. Construction");
+        System.out.print("Choisissez une option : ");
+        int projectTypeChoice = readIntInRange(1, 2, "Option invalide. Veuillez réessayer.");
+        String projectType = (projectTypeChoice == 1) ? "Rénovation" : "Construction";
+
         // Get project details
         System.out.print("Entrez le nom du projet : ");
         String projectName = scanner.nextLine();
+        System.out.print("Entrez la surface du projet (en m²) : ");
+        BigDecimal surface = readPositiveBigDecimal("Surface invalide. Veuillez entrer une valeur positive : ");
         System.out.print("Entrez la marge bénéficiaire du projet (en %) : ");
         BigDecimal projectMargin = readPositiveBigDecimal("Marge bénéficiaire invalide. Veuillez entrer une valeur positive : ");
         System.out.print("Entrez le coût total du projet : ");
@@ -113,12 +122,13 @@ public class ConsoleUI {
 
         // Create the new project
         Project newProject = new Project(
-                UUID.randomUUID(),
                 projectName,
                 projectMargin,
                 ProjectStatus.IN_PROGRESS,
                 totalCost,
-                client
+                client,
+                surface,
+                projectType
         );
 
         // Add the project to the repository

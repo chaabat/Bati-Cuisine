@@ -9,16 +9,17 @@ import java.util.UUID;
 public class Project {
     private UUID id;                     // Project ID
     private String projectName;          // Name of the project
-    private BigDecimal projectMargin;     // Profit margin
+    private BigDecimal projectMargin;    // Profit margin
     private BigDecimal totalCost;        // Total cost of the project
     private ProjectStatus projectStatus; // Current status of the project
     private Client client;               // Associated client
     private List<Material> materials;    // List of materials
     private List<Labor> labors;          // List of labor
     private BigDecimal surface;          // Surface area (if applicable)
+    private String type;                 // Type of the project (e.g., Renovation, New Construction)
 
     // Constructor for initializing a Project from the database (with ID)
-    public Project(UUID id, String projectName, BigDecimal projectMargin, ProjectStatus projectStatus, BigDecimal totalCost, Client client) {
+    public Project(UUID id, String projectName, BigDecimal projectMargin, ProjectStatus projectStatus, BigDecimal totalCost, Client client, BigDecimal surface, String type) {
         this.id = id;
         this.projectName = projectName;
         this.projectMargin = projectMargin;
@@ -27,11 +28,13 @@ public class Project {
         this.client = client;
         this.materials = new ArrayList<>(); // Initialize empty lists
         this.labors = new ArrayList<>();
+        this.surface = surface;
+        this.type = type;
     }
 
     // Constructor for creating a new Project (without ID)
-    public Project(String projectName, BigDecimal projectMargin, ProjectStatus projectStatus, BigDecimal totalCost, Client client) {
-        this(UUID.randomUUID(), projectName, projectMargin, projectStatus, totalCost, client);
+    public Project(String projectName, BigDecimal projectMargin, ProjectStatus projectStatus, BigDecimal totalCost, Client client, BigDecimal surface, String type) {
+        this(UUID.randomUUID(), projectName, projectMargin, projectStatus, totalCost, client, surface, type);
     }
 
     // Getters & Setters
@@ -107,6 +110,14 @@ public class Project {
         this.surface = surface;
     }
 
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
     // Add a material to the project
     public void addMaterial(Material material) {
         this.materials.add(material);
@@ -130,12 +141,13 @@ public class Project {
                 Objects.equals(client, project.client) &&
                 Objects.equals(materials, project.materials) &&
                 Objects.equals(labors, project.labors) &&
-                Objects.equals(surface, project.surface);
+                Objects.equals(surface, project.surface) &&
+                Objects.equals(type, project.type);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, projectName, projectMargin, totalCost, projectStatus, client, materials, labors, surface);
+        return Objects.hash(id, projectName, projectMargin, totalCost, projectStatus, client, materials, labors, surface, type);
     }
 
     @Override
@@ -150,6 +162,7 @@ public class Project {
                 ", materials=" + materials +
                 ", labors=" + labors +
                 ", surface=" + surface +
+                ", type='" + type + '\'' +
                 '}';
     }
 }

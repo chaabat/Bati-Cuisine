@@ -19,6 +19,7 @@ public class QuoteRepositoryImpl implements QuoteRepository {
         String query = "INSERT INTO quotes (id, estimatedAmount, issueDate, validityDate, isAccepted, projectId) VALUES (uuid_generate_v4(), ?, ?, ?, ?, ?)";
         try (Connection connection = DataBaseConnection.getInstance().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
+
             statement.setBigDecimal(1, quote.getEstimatedAmount());  // BigDecimal for amount
             statement.setDate(2, Date.valueOf(quote.getIssueDate()));  // LocalDate to SQL Date
             statement.setDate(3, Date.valueOf(quote.getValidityDate()));  // LocalDate to SQL Date
@@ -33,7 +34,7 @@ public class QuoteRepositoryImpl implements QuoteRepository {
 
     @Override
     public Optional<Quote> getQuoteById(UUID id) {
-        String query = "SELECT q.*, p.projectName, p.profitMargin, p.status, p.totalCost " +
+        String query = "SELECT q.*, p.projectName, p.profitMargin, p.status, p.totalCost, p.surface, p.type " +
                 "FROM quotes q INNER JOIN projects p ON q.projectId = p.id WHERE q.id = ?";
         try (Connection connection = DataBaseConnection.getInstance().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
@@ -47,7 +48,9 @@ public class QuoteRepositoryImpl implements QuoteRepository {
                         resultSet.getBigDecimal("profitMargin"),
                         ProjectStatus.valueOf(resultSet.getString("status")),
                         resultSet.getBigDecimal("totalCost"),
-                        null  // Assuming client details are fetched separately
+                        null,  // Assuming client details are fetched separately
+                        resultSet.getBigDecimal("surface"),  // Get surface
+                        resultSet.getString("type")  // Get project type
                 );
 
                 Quote quote = new Quote(
@@ -69,7 +72,7 @@ public class QuoteRepositoryImpl implements QuoteRepository {
     @Override
     public List<Quote> getAllQuotes() {
         List<Quote> quotes = new ArrayList<>();
-        String query = "SELECT q.*, p.projectName, p.profitMargin, p.status, p.totalCost " +
+        String query = "SELECT q.*, p.projectName, p.profitMargin, p.status, p.totalCost, p.surface, p.type " +
                 "FROM quotes q INNER JOIN projects p ON q.projectId = p.id";
         try (Connection connection = DataBaseConnection.getInstance().getConnection();
              Statement statement = connection.createStatement();
@@ -82,7 +85,9 @@ public class QuoteRepositoryImpl implements QuoteRepository {
                         resultSet.getBigDecimal("profitMargin"),
                         ProjectStatus.valueOf(resultSet.getString("status")),
                         resultSet.getBigDecimal("totalCost"),
-                        null  // Assuming client details are fetched separately
+                        null,  // Assuming client details are fetched separately
+                        resultSet.getBigDecimal("surface"),  // Get surface
+                        resultSet.getString("type")  // Get project type
                 );
 
                 Quote quote = new Quote(

@@ -15,7 +15,8 @@ public class ProjectRepositoryImpl implements ProjectRepository {
 
     @Override
     public void addProject(Project project) {
-        String query = "INSERT INTO projects (id, projectName, profitMargin, totalCost, status, clientId) VALUES (?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO projects (id, projectName, profitMargin, totalCost, status, clientId, surface, type) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = DataBaseConnection.getInstance().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
@@ -30,13 +31,16 @@ public class ProjectRepositoryImpl implements ProjectRepository {
             statement.setBigDecimal(4, project.getTotalCost());
             statement.setObject(5, project.getProjectStatus().name(), Types.OTHER);
             statement.setObject(6, project.getClient().getId(), Types.OTHER);
+            statement.setBigDecimal(7, project.getSurface()); // Set surface
+            statement.setString(8, project.getType()); // Set project type
 
             // Execute the query
             statement.executeUpdate();
             projectCache.put(projectId, project);
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Improved error message with context
+            System.err.println("Error adding project to the database. Details: " + e.getMessage());
         }
     }
 
@@ -50,6 +54,7 @@ public class ProjectRepositoryImpl implements ProjectRepository {
                 "FROM projects p JOIN clients c ON p.clientId = c.id WHERE p.id = ?";
         try (Connection connection = DataBaseConnection.getInstance().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
+
             statement.setObject(1, id, Types.OTHER);
             ResultSet resultSet = statement.executeQuery();
 
@@ -66,13 +71,16 @@ public class ProjectRepositoryImpl implements ProjectRepository {
                                 resultSet.getString("clientAddress"),
                                 resultSet.getString("clientPhone"),
                                 resultSet.getBoolean("isProfessional")
-                        )
+                        ),
+                        resultSet.getBigDecimal("surface"), // Get surface
+                        resultSet.getString("type") // Get project type
                 );
                 projectCache.put(project.getId(), project);
                 return Optional.of(project);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Improved error message with context
+            System.err.println("Error fetching project by ID. Details: " + e.getMessage());
         }
         return Optional.empty();
     }
@@ -99,13 +107,16 @@ public class ProjectRepositoryImpl implements ProjectRepository {
                                 resultSet.getString("clientAddress"),
                                 resultSet.getString("clientPhone"),
                                 resultSet.getBoolean("isProfessional")
-                        )
+                        ),
+                        resultSet.getBigDecimal("surface"), // Get surface
+                        resultSet.getString("type") // Get project type
                 );
                 projectCache.put(project.getId(), project);
                 projects.add(project);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Improved error message with context
+            System.err.println("Error fetching all projects from the database. Details: " + e.getMessage());
         }
         return projects;
     }
