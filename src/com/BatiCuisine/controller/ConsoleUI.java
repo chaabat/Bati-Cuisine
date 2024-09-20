@@ -73,11 +73,23 @@ public class ConsoleUI {
             if (!clients.isEmpty()) {
                 if (clients.size() == 1) {
                     client = clients.get(0);
-                    System.out.println("Client trouvé : " + client.getName());
+                    System.out.println("Client trouvé !");
+                    System.out.println("Nom : " + client.getName());
+                    System.out.println("Adresse : " + client.getAddress());
+                    System.out.println("Numéro de téléphone : " + client.getPhone());
+                    System.out.print("Souhaitez-vous continuer avec ce client ? (y/n) : ");
+                    if (!scanner.nextLine().equalsIgnoreCase("y")) {
+                        System.out.println("Aucun client sélectionné. Annulation de la création du projet.");
+                        return;
+                    }
                 } else {
                     System.out.println("Plusieurs clients trouvés :");
                     for (int i = 0; i < clients.size(); i++) {
-                        System.out.println((i + 1) + ". " + clients.get(i).getName());
+                        Client foundClient = clients.get(i);
+                        System.out.println((i + 1) + ". " + foundClient.getName());
+                        System.out.println("   Adresse : " + foundClient.getAddress());
+                        System.out.println("   Numéro de téléphone : " + foundClient.getPhone());
+
                     }
                     System.out.print("Veuillez sélectionner un client en entrant le numéro : ");
                     int selectedIndex = readIntInRange(1, clients.size(), "Choix invalide. Veuillez réessayer.") - 1;
@@ -119,6 +131,7 @@ public class ConsoleUI {
         System.out.println("--- Ajout de la main-d'œuvre ---");
         addLabor(newProject);
     }
+
 
     private void addMaterials(Project project) {
         boolean addMoreMaterials = true;
