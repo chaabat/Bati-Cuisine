@@ -1,12 +1,12 @@
 package com.BatiCuisine.controller;
 
 import com.BatiCuisine.model.*;
-import com.BatiCuisine.service.ClientService;
-import com.BatiCuisine.service.LaborService;
-import com.BatiCuisine.service.MaterialService;
-import com.BatiCuisine.service.ProjectService;
+import com.BatiCuisine.service.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 public class ConsoleUI {
@@ -15,13 +15,16 @@ public class ConsoleUI {
     private final MaterialService materialService;
     private final LaborService laborService;
     private final ClientService clientService;
+    private final QuoteService quoteService;
     private final Scanner scanner = new Scanner(System.in);
 
-    public ConsoleUI(ProjectService projectService, MaterialService materialService, LaborService laborService, ClientService clientService) {
+    public ConsoleUI(ProjectService projectService, MaterialService materialService, LaborService laborService, ClientService clientService, QuoteService quoteService) {
         this.projectService = projectService;
         this.materialService = materialService;
         this.laborService = laborService;
         this.clientService = clientService;
+        this.quoteService = quoteService;
+
     }
 
     public void showMainMenu() {
@@ -115,15 +118,18 @@ public class ConsoleUI {
         String projectName = scanner.nextLine();
         System.out.print("Entrez la surface du projet (en m²) : ");
         BigDecimal surface = readPositiveBigDecimal("Surface invalide. Veuillez entrer une valeur positive : ");
-        System.out.print("Entrez la marge bénéficiaire du projet (en %) : ");
-        BigDecimal projectMargin = readPositiveBigDecimal("Marge bénéficiaire invalide. Veuillez entrer une valeur positive : ");
+
+        // Remove profit margin input during project creation
+        // Profit margin will be null initially and set later during the cost calculation
+        BigDecimal projectMargin = null;
+
         System.out.print("Entrez le coût total du projet : ");
         BigDecimal totalCost = readPositiveBigDecimal("Coût total invalide. Veuillez entrer une valeur positive : ");
 
-        // Create the new project
+        // Create the new project with null profit margin
         Project newProject = new Project(
                 projectName,
-                projectMargin,
+                projectMargin,  // Set profit margin to null initially
                 ProjectStatus.IN_PROGRESS,
                 totalCost,
                 client,
@@ -141,6 +147,7 @@ public class ConsoleUI {
         System.out.println("--- Ajout de la main-d'œuvre ---");
         addLabor(newProject);
     }
+
 
 
     private void addMaterials(Project project) {
@@ -232,17 +239,39 @@ public class ConsoleUI {
         if (projectOpt.isPresent()) {
             Project project = projectOpt.get();
 
-            System.out.print("Entrez le taux de TVA en pourcentage : ");
-            BigDecimal vatRate = readPositiveBigDecimal("Taux de TVA invalide. Veuillez entrer une valeur positive : ");
+            // Ask about applying VAT
+            System.out.print("Souhaitez-vous appliquer une TVA au projet ? (y/n) : ");
+            String applyVatInput = scanner.nextLine();
+            BigDecimal vatRate = BigDecimal.ZERO;
 
-            System.out.print("Entrez la marge bénéficiaire en pourcentage : ");
-            BigDecimal profitMargin = readPositiveBigDecimal("Marge bénéficiaire invalide. Veuillez entrer une valeur positive : ");
+            if (applyVatInput.equalsIgnoreCase("y")) {
+                System.out.print("Entrez le pourcentage de TVA (%) : ");
+                vatRate = readPositiveBigDecimal("Pourcentage de TVA invalide. Veuillez entrer une valeur positive : ");
+            }
 
-            // Calculate project cost, now directly using the new method
+            // Ask about applying profit margin
+            System.out.print("Souhaitez-vous appliquer une marge bénéficiaire au projet ? (y/n) : ");
+            String applyMarginInput = scanner.nextLine();
+            BigDecimal profitMargin = BigDecimal.ZERO;
+
+            if (applyMarginInput.equalsIgnoreCase("y")) {
+                System.out.print("Entrez le pourcentage de marge bénéficiaire (%) : ");
+                profitMargin = readPositiveBigDecimal("Pourcentage de marge bénéficiaire invalide. Veuillez entrer une valeur positive : ");
+            }
+
+            // Calculate project cost
+            System.out.println("Calcul du coût en cours...");
             Optional<Project> updatedProjectOpt = projectService.calculateProjectCost(project, vatRate, profitMargin);
 
             if (updatedProjectOpt.isPresent()) {
-                projectService.displayProjectCostDetails(updatedProjectOpt.get(), vatRate);
+                Project updatedProject = updatedProjectOpt.get();
+                projectService.displayProjectCostDetails(updatedProject, vatRate);
+
+                // Save the project with updated profit margin to the database
+                projectService.updateProject(updatedProject);
+
+                // Handle saving the quote with the calculated project cost
+                handleQuoteSaving(updatedProject);
             } else {
                 System.out.println("Erreur dans le calcul du coût du projet.");
             }
@@ -250,6 +279,72 @@ public class ConsoleUI {
             System.out.println("Projet non trouvé.");
         }
     }
+
+
+
+    private void handleQuoteSaving(Project project) {
+        System.out.println("--- Enregistrement du Devis ---");
+
+        // Formatting the date to 'dd/MM/yyyy' format
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        LocalDate issueDate = null;
+        LocalDate validityDate = null;
+
+        // Get and parse the issue date
+        while (issueDate == null) {
+            System.out.print("Entrez la date d'émission du devis (format : jj/mm/aaaa) : ");
+            String issueDateString = scanner.nextLine();
+            try {
+                issueDate = LocalDate.parse(issueDateString, formatter);
+            } catch (DateTimeParseException e) {
+                System.out.println("Date invalide. Veuillez entrer la date dans le format jj/mm/aaaa.");
+            }
+        }
+
+        // Get and parse the validity date
+        while (validityDate == null) {
+            System.out.print("Entrez la date de validité du devis (format : jj/mm/aaaa) : ");
+            String validityDateString = scanner.nextLine();
+            try {
+                validityDate = LocalDate.parse(validityDateString, formatter);
+            } catch (DateTimeParseException e) {
+                System.out.println("Date invalide. Veuillez entrer la date dans le format jj/mm/aaaa.");
+            }
+        }
+
+        // Use the total project cost already calculated
+        BigDecimal estimatedAmount = project.getTotalCost();
+
+        // Create the quote object
+        Quote quote = new Quote(
+                estimatedAmount,    // The total cost from the project
+                issueDate,          // LocalDate for the issue date
+                validityDate,       // LocalDate for the validity date
+                false,              // Initially, the quote is not accepted
+                project             // Pass the entire Project object
+        );
+
+        // Save the quote in the database
+        quoteService.addQuote(quote);
+        System.out.println("Devis enregistré avec succès !");
+
+        // Ask if the client accepts the quote
+        System.out.print("Acceptez-vous le devis ? (oui/non) : ");
+        String acceptanceInput = scanner.nextLine();
+
+        // Update the project status based on acceptance
+        boolean isAccepted = acceptanceInput.equalsIgnoreCase("oui");
+        project.setProjectStatus(isAccepted ? ProjectStatus.COMPLETED : ProjectStatus.CANCELLED);
+        projectService.updateProjectStatus(project, project.getProjectStatus());
+
+        System.out.println("Le projet est maintenant marqué comme " + (isAccepted ? "terminé !" : "annulé !"));
+    }
+
+
+
+
+
 
 
 

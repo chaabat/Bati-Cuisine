@@ -32,6 +32,8 @@ public class Quote {
         this.project = project;
     }
 
+
+
     // Getters & Setters
 
     public UUID getId() {

@@ -26,8 +26,8 @@ public class QuoteRepositoryImpl implements QuoteRepository {
 
             statement.setObject(1, quoteId, Types.OTHER);
             statement.setBigDecimal(2, quote.getEstimatedAmount());
-            statement.setDate(3, java.sql.Date.valueOf(quote.getIssueDate())); // Use java.sql.Date
-            statement.setDate(4, java.sql.Date.valueOf(quote.getValidityDate())); // Use java.sql.Date
+            statement.setDate(3, java.sql.Date.valueOf(quote.getIssueDate()));
+            statement.setDate(4, java.sql.Date.valueOf(quote.getValidityDate()));
             statement.setBoolean(5, quote.isAccepted());
             statement.setObject(6, quote.getProject().getId(), Types.OTHER);
 
@@ -35,10 +35,9 @@ public class QuoteRepositoryImpl implements QuoteRepository {
             quoteCache.put(quoteId, quote);
 
         } catch (SQLException e) {
-            System.err.println("Error adding quote to the database. Details: " + e.getMessage());
+            throw new RuntimeException("Error adding quote to the database: " + e.getMessage(), e);
         }
     }
-
     @Override
     public Optional<Quote> getQuoteById(UUID id) {
         if (quoteCache.containsKey(id)) {

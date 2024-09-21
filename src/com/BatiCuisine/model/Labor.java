@@ -20,6 +20,9 @@ public class Labor extends Component {
     public BigDecimal getHourlyRate() {
         return hourlyRate;
     }
+    public BigDecimal getTotalCost() {
+        return hourlyRate.multiply(hoursWorked).multiply(productivityFactor);
+    }
 
     public void setHourlyRate(BigDecimal hourlyRate) {
         this.hourlyRate = hourlyRate;

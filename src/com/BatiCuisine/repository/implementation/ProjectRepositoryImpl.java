@@ -121,24 +121,32 @@ public class ProjectRepositoryImpl implements ProjectRepository {
         }
         return projects;
     }
+
     @Override
     public void updateProject(Project project) {
-        String query = "UPDATE projects SET status = ? WHERE id = ?";
+        String query = "UPDATE projects SET projectName = ?, profitMargin = ?, totalCost = ?, status = ?::project_status, surface = ?, type = ? WHERE id = ?";
 
         try (Connection connection = DataBaseConnection.getInstance().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
 
-            statement.setObject(1, project.getProjectStatus().name(), Types.OTHER);
-            statement.setObject(2, project.getId(), Types.OTHER);
+            statement.setString(1, project.getProjectName());
+            statement.setBigDecimal(2, project.getProjectMargin());
+            statement.setBigDecimal(3, project.getTotalCost());
+            statement.setString(4, project.getProjectStatus().name());  // This needs to be cast to enum type
+            statement.setBigDecimal(5, project.getSurface());
+            statement.setString(6, project.getType());
+            statement.setObject(7, project.getId(), Types.OTHER);
+
+            // Execute the update
             statement.executeUpdate();
 
-            // Update cache
-            projectCache.put(project.getId(), project);
-
         } catch (SQLException e) {
-            System.err.println("Error updating project status. Details: " + e.getMessage());
+            System.err.println("Error updating project: " + e.getMessage());
         }
     }
+
+
+
 
 
 }

@@ -3,6 +3,7 @@ package com.BatiCuisine.service;
 import com.BatiCuisine.model.Project;
 import com.BatiCuisine.model.Material;
 import com.BatiCuisine.model.Labor;
+import com.BatiCuisine.model.ProjectStatus;
 import com.BatiCuisine.repository.interfaces.ProjectRepository;
 import com.BatiCuisine.util.CostCalculator;
 
@@ -42,26 +43,40 @@ public class ProjectService {
     }
 
     public Optional<Project> calculateProjectCost(Project project, BigDecimal vatRate, BigDecimal profitMargin) {
+        validateRate(vatRate);
+        validateRate(profitMargin);
+
         if (project == null) {
             throw new IllegalArgumentException("Project cannot be null");
+        }
+
+        // Set profit margin if it's provided during cost calculation
+        if (profitMargin != null) {
+            project.setProjectMargin(profitMargin);
         }
 
         List<Material> materials = materialService.findByProjectId(project.getId());
         List<Labor> labors = laborService.findByProjectId(project.getId());
 
-        // Calculate material and labor costs using the CostCalculator
+        // Calculate costs
         BigDecimal totalMaterialCost = CostCalculator.calculateTotalMaterialCost(materials);
         BigDecimal totalLaborCost = CostCalculator.calculateTotalLaborCost(labors);
 
-        // Calculate total project cost
+        // Compute total project cost
         BigDecimal totalProjectCost = CostCalculator.calculateTotalProjectCost(
-                totalMaterialCost, totalLaborCost, vatRate, profitMargin
+                totalMaterialCost, totalLaborCost, vatRate, project.getProjectMargin()
         );
 
-        // Update project total cost
-        project.setTotalCost(totalProjectCost);
+        project.setTotalCost(totalProjectCost);  // Update total cost in the project
+
+        // Save the updated project in the repository
+        updateProject(project);
+
         return Optional.of(project);
     }
+
+
+
 
     private void validateRate(BigDecimal rate) {
         if (rate == null || rate.compareTo(BigDecimal.ZERO) < 0 || rate.compareTo(BigDecimal.valueOf(100)) > 0) {
@@ -74,8 +89,15 @@ public class ProjectService {
     }
 
     private BigDecimal calculateProfit(BigDecimal totalCost, BigDecimal profitMargin) {
+        if (totalCost == null) {
+            throw new IllegalArgumentException("Total cost cannot be null");
+        }
+        if (profitMargin == null) {
+            return BigDecimal.ZERO;  // Return 0 if profit margin is not provided
+        }
         return profitMargin.multiply(totalCost).divide(BigDecimal.valueOf(100));
     }
+
 
     public void displayProjectCostDetails(Project project, BigDecimal vatRate) {
         if (project == null) {
@@ -112,6 +134,7 @@ public class ProjectService {
         System.out.printf("**Coût total final du projet : %.2f €**%n", finalTotalCost);
     }
 
+
     private void displayMaterials(List<Material> materials, BigDecimal totalMaterialCost, BigDecimal vatAmount, BigDecimal vatRate) {
         System.out.println("1. Matériaux :");
         for (Material material : materials) {
@@ -133,4 +156,39 @@ public class ProjectService {
         System.out.printf("**Coût total de la main-d'œuvre avant TVA : %.2f €**%n", totalLaborCost);
         System.out.printf("**Coût total de la main-d'œuvre avec TVA (%.0f%%) : %.2f €**%n", vatRate, totalLaborCost.add(vatAmount));
     }
+
+
+    public void updateProjectStatus(Project project, ProjectStatus newStatus) {
+        if (project == null) {
+            throw new IllegalArgumentException("Project cannot be null");
+        }
+        if (newStatus == null) {
+            throw new IllegalArgumentException("New status cannot be null");
+        }
+
+        // Update the project's status
+        project.setProjectStatus(newStatus);
+
+        // Save the updated project in the repository
+        projectRepository.updateProject(project);
+    }
+
+
+    public List<Project> getAllProjects() {
+        List<Project> projects = projectRepository.getAllProjects();
+        if (projects == null) {
+            return new ArrayList<>();
+        }
+        return projects;
+    }
+
+    public void updateProject(Project updatedProject) {
+        if (updatedProject == null) {
+            throw new IllegalArgumentException("Project cannot be null");
+        }
+
+        // Update the project in the repository
+        projectRepository.updateProject(updatedProject);
+    }
+
 }

@@ -1,5 +1,7 @@
 package com.BatiCuisine.model;
 
+import com.BatiCuisine.util.CostCalculator;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -66,6 +68,8 @@ public class Project {
         return totalCost;
     }
 
+
+
     public void setTotalCost(BigDecimal totalCost) {
         this.totalCost = totalCost;
     }
@@ -112,6 +116,13 @@ public class Project {
 
     public String getType() {
         return type;
+    }
+
+    public void setStatus(ProjectStatus projectStatus) {
+        if (projectStatus == null) {
+            throw new IllegalArgumentException("Project status cannot be null");
+        }
+        this.projectStatus = projectStatus;
     }
 
     public void setType(String type) {
@@ -186,4 +197,55 @@ public class Project {
         return builder.toString();
     }
 
+
+    public String getStatus() {
+        return projectStatus != null ? projectStatus.name() : "Unknown status";
+    }
+    public BigDecimal getTotalMaterialCostBeforeVAT() {
+        return materials.stream()
+                .map(Material::getTotalCost)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public BigDecimal getTotalMaterialCostWithVAT(BigDecimal vatRate) {
+        BigDecimal totalBeforeVAT = getTotalMaterialCostBeforeVAT();
+        return totalBeforeVAT.add(totalBeforeVAT.multiply(vatRate.divide(BigDecimal.valueOf(100))));
+    }
+
+    public BigDecimal getTotalLaborCostBeforeVAT() {
+        return labors.stream()
+                .map(Labor::getTotalCost)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public BigDecimal getTotalLaborCostWithVAT(BigDecimal vatRate) {
+        BigDecimal totalBeforeVAT = getTotalLaborCostBeforeVAT();
+        return totalBeforeVAT.add(totalBeforeVAT.multiply(vatRate.divide(BigDecimal.valueOf(100))));
+    }
+
+    public BigDecimal getTotalCostBeforeMargin() {
+        return getTotalMaterialCostBeforeVAT().add(getTotalLaborCostBeforeVAT());
+    }
+
+    public BigDecimal getProfitMarginAmount(BigDecimal profitMargin) {
+        return getTotalCostBeforeMargin().multiply(profitMargin.divide(BigDecimal.valueOf(100)));
+    }
+
+    public BigDecimal getFinalCost(BigDecimal profitMargin) {
+        return getTotalCostBeforeMargin().add(getProfitMarginAmount(profitMargin));
+    }
+
+    public BigDecimal getTotalMaterialCost() {
+        return CostCalculator.calculateTotalMaterialCost(materials);
+    }
+
+    public BigDecimal getTotalLaborCost() {
+        return CostCalculator.calculateTotalLaborCost(labors);
+    }
+
+    public BigDecimal calculateFinalCost(BigDecimal vatRate, BigDecimal profitMargin) {
+        BigDecimal materialCost = getTotalMaterialCost();
+        BigDecimal laborCost = getTotalLaborCost();
+        return CostCalculator.calculateTotalProjectCost(materialCost, laborCost, vatRate, profitMargin);
+    }
 }

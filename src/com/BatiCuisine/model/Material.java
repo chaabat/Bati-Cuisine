@@ -18,6 +18,9 @@ public class Material extends Component {
     public BigDecimal getQualityCoefficient() {
         return qualityCoefficient;
     }
+    public BigDecimal getTotalCost() {
+        return getUnitCost().multiply(getQuantity()).add(transportCost);
+    }
 
     public void setQualityCoefficient(BigDecimal qualityCoefficient) {
         this.qualityCoefficient = qualityCoefficient;

@@ -25,7 +25,7 @@ public class Main {
         QuoteService quoteService = new QuoteService(quoteRepository,projectRepository);
 
         // Initialize and show UI
-        ConsoleUI consoleUI = new ConsoleUI(projectService, materialService, laborService, clientService);
+        ConsoleUI consoleUI = new ConsoleUI(projectService, materialService, laborService, clientService,quoteService);
         consoleUI.showMainMenu();
     }
 }
