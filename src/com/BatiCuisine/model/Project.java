@@ -152,17 +152,38 @@ public class Project {
 
     @Override
     public String toString() {
-        return "Project{" +
-                "id=" + id +
-                ", projectName='" + projectName + '\'' +
-                ", projectMargin=" + projectMargin +
-                ", totalCost=" + totalCost +
-                ", projectStatus=" + projectStatus +
-                ", client=" + client +
-                ", materials=" + materials +
-                ", labors=" + labors +
-                ", surface=" + surface +
-                ", type='" + type + '\'' +
-                '}';
+        StringBuilder builder = new StringBuilder();
+        builder.append("Project ID: ").append(id).append("\n");
+        builder.append("Project Name: ").append(projectName).append("\n");
+        builder.append("Client: ").append(client.getName()).append("\n");
+        builder.append("Client Address: ").append(client.getAddress()).append("\n");
+        builder.append("Project Margin: ").append(projectMargin).append("%\n");
+        builder.append("Total Cost: ").append(totalCost).append("€\n");
+        builder.append("Status: ").append(projectStatus).append("\n");
+        builder.append("Surface: ").append(surface).append(" m²\n");
+        builder.append("Type: ").append(type).append("\n");
+
+        // Append material details
+        builder.append("\nMaterials:\n");
+        if (!materials.isEmpty()) {
+            for (Material material : materials) {
+                builder.append(material.toString()).append("\n");
+            }
+        } else {
+            builder.append("No materials added.\n"); // If materials list is empty
+        }
+
+        // Append labor details
+        builder.append("\nLabors:\n");
+        if (!labors.isEmpty()) {
+            for (Labor labor : labors) {
+                builder.append(labor.toString()).append("\n");
+            }
+        } else {
+            builder.append("No labor added.\n"); // If labors list is empty
+        }
+
+        return builder.toString();
     }
+
 }

@@ -3,6 +3,7 @@ package com.BatiCuisine.repository.implementation;
 import com.BatiCuisine.model.Project;
 import com.BatiCuisine.model.Client;
 import com.BatiCuisine.model.ProjectStatus;
+import com.BatiCuisine.model.Quote;
 import com.BatiCuisine.repository.interfaces.ProjectRepository;
 import com.BatiCuisine.config.DataBaseConnection;
 
@@ -120,4 +121,24 @@ public class ProjectRepositoryImpl implements ProjectRepository {
         }
         return projects;
     }
+    @Override
+    public void updateProject(Project project) {
+        String query = "UPDATE projects SET status = ? WHERE id = ?";
+
+        try (Connection connection = DataBaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setObject(1, project.getProjectStatus().name(), Types.OTHER);
+            statement.setObject(2, project.getId(), Types.OTHER);
+            statement.executeUpdate();
+
+            // Update cache
+            projectCache.put(project.getId(), project);
+
+        } catch (SQLException e) {
+            System.err.println("Error updating project status. Details: " + e.getMessage());
+        }
+    }
+
+
 }

@@ -150,4 +150,37 @@ public class LaborRepositoryImpl implements LaborRepository {
             e.printStackTrace();
         }
     }
+
+    @Override
+    public List<Labor> findByProjectId(UUID projectId) {
+        List<Labor> laborList = new ArrayList<>();
+        String query = "SELECT c.id AS componentId, c.name, c.unitCost, c.taxRate, c.projectId, l.hourlyRate, l.hoursWorked, l.productivityFactor " +
+                "FROM labor l JOIN component c ON l.componentId = c.id WHERE c.projectId = ?";
+
+        try (Connection connection = DataBaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setObject(1, projectId, java.sql.Types.OTHER); // Set the projectId parameter
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                Labor labor = new Labor(
+                        (UUID) resultSet.getObject("componentId"), // UUID
+                        resultSet.getString("name"),                // String (name from Component)
+                        resultSet.getBigDecimal("unitCost"),        // BigDecimal (unitCost from Component)
+                        BigDecimal.ZERO,                            // Quantity not applicable for labor
+                        resultSet.getBigDecimal("taxRate"),        // BigDecimal (taxRate from Component)
+                        (UUID) resultSet.getObject("projectId"),    // UUID (projectId from Component)
+                        resultSet.getBigDecimal("hourlyRate"),     // BigDecimal
+                        resultSet.getBigDecimal("hoursWorked"),    // BigDecimal
+                        resultSet.getBigDecimal("productivityFactor") // BigDecimal
+                );
+                laborList.add(labor);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return laborList;
+    }
+
 }

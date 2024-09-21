@@ -4,6 +4,7 @@ import com.BatiCuisine.model.Project;
 import com.BatiCuisine.model.Material;
 import com.BatiCuisine.model.Labor;
 import com.BatiCuisine.repository.interfaces.ProjectRepository;
+import com.BatiCuisine.util.CostCalculator;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -16,38 +17,19 @@ public class ProjectService {
     private final MaterialService materialService;
     private final LaborService laborService;
 
-    /**
-     * Constructor to inject ProjectRepository, MaterialService, and LaborService dependencies.
-     *
-     * @param projectRepository The repository to manage projects.
-     * @param materialService The service to manage materials.
-     * @param laborService The service to manage labor.
-     */
     public ProjectService(ProjectRepository projectRepository, MaterialService materialService, LaborService laborService) {
         this.projectRepository = projectRepository;
         this.materialService = materialService;
         this.laborService = laborService;
     }
 
-    /**
-     * Adds a new project by delegating to the repository.
-     *
-     * @param project The project to add.
-     */
     public void addProject(Project project) {
-        // Validate project before adding
         if (project == null) {
             throw new IllegalArgumentException("Project cannot be null");
         }
-        projectRepository.addProject(project);  // Fixed: Use the instance variable, not static call
+        projectRepository.addProject(project);
     }
 
-    /**
-     * Retrieves a project by its UUID.
-     *
-     * @param id The UUID of the project.
-     * @return An Optional containing the project if found, or empty if not.
-     */
     public Optional<Project> getProjectById(UUID id) {
         if (id == null) {
             throw new IllegalArgumentException("Project ID cannot be null");
@@ -55,67 +37,100 @@ public class ProjectService {
         return projectRepository.getProjectById(id);
     }
 
-    /**
-     * Retrieves all projects.
-     *
-     * @return A list of all projects.
-     */
     public List<Project> listAllProjects() {
-        return projectRepository.getAllProjects();
+        return Optional.ofNullable(projectRepository.getAllProjects()).orElse(new ArrayList<>());
     }
 
-    /**
-     * Calculates the total cost of a project, including materials, labor, VAT, and profit margin.
-     *
-     * @param project The project for which to calculate the cost.
-     * @param vatRate The VAT rate to apply.
-     * @param profitMargin The profit margin to apply.
-     * @return The final total cost of the project.
-     */
-    public BigDecimal calculateTotalProjectCost(Project project, BigDecimal vatRate, BigDecimal profitMargin) {
+    public Optional<Project> calculateProjectCost(Project project, BigDecimal vatRate, BigDecimal profitMargin) {
         if (project == null) {
             throw new IllegalArgumentException("Project cannot be null");
         }
 
-        // Initialize materials and labor lists if null
-        if (project.getMaterials() == null) {
-            project.setMaterials(new ArrayList<>());
-        }
-        if (project.getLabors() == null) {
-            project.setLabors(new ArrayList<>());
-        }
+        List<Material> materials = materialService.findByProjectId(project.getId());
+        List<Labor> labors = laborService.findByProjectId(project.getId());
 
-        // Calculate costs
-        BigDecimal totalMaterialCost = materialService.calculateTotalMaterialCost(project.getMaterials());
-        BigDecimal totalLaborCost = laborService.calculateTotalLaborCost(project.getLabors());
+        // Calculate material and labor costs using the CostCalculator
+        BigDecimal totalMaterialCost = CostCalculator.calculateTotalMaterialCost(materials);
+        BigDecimal totalLaborCost = CostCalculator.calculateTotalLaborCost(labors);
 
-        // Cost calculation
-        BigDecimal totalCostBeforeVat = totalMaterialCost.add(totalLaborCost);
-        BigDecimal vatAmount = vatRate.multiply(totalCostBeforeVat).divide(BigDecimal.valueOf(100));
-        BigDecimal profitAmount = profitMargin.multiply(totalCostBeforeVat).divide(BigDecimal.valueOf(100));
-        BigDecimal totalCostWithVat = totalCostBeforeVat.add(vatAmount);
-        BigDecimal totalCostFinal = totalCostWithVat.add(profitAmount);
+        // Calculate total project cost
+        BigDecimal totalProjectCost = CostCalculator.calculateTotalProjectCost(
+                totalMaterialCost, totalLaborCost, vatRate, profitMargin
+        );
 
-        return totalCostFinal;
+        // Update project total cost
+        project.setTotalCost(totalProjectCost);
+        return Optional.of(project);
     }
 
-    /**
-     * Displays the project cost details.
-     *
-     * @param project The project whose cost details are to be displayed.
-     * @param totalCost The total cost of the project.
-     */
-    public void displayProjectCostDetails(Project project, BigDecimal totalCost) {
+    private void validateRate(BigDecimal rate) {
+        if (rate == null || rate.compareTo(BigDecimal.ZERO) < 0 || rate.compareTo(BigDecimal.valueOf(100)) > 0) {
+            throw new IllegalArgumentException("Rate must be between 0 and 100");
+        }
+    }
+
+    private BigDecimal calculateVat(BigDecimal totalCost, BigDecimal vatRate) {
+        return vatRate.multiply(totalCost).divide(BigDecimal.valueOf(100));
+    }
+
+    private BigDecimal calculateProfit(BigDecimal totalCost, BigDecimal profitMargin) {
+        return profitMargin.multiply(totalCost).divide(BigDecimal.valueOf(100));
+    }
+
+    public void displayProjectCostDetails(Project project, BigDecimal vatRate) {
         if (project == null) {
             throw new IllegalArgumentException("Project cannot be null");
         }
 
+        List<Material> materials = Optional.ofNullable(materialService.findByProjectId(project.getId())).orElse(new ArrayList<>());
+        List<Labor> labors = Optional.ofNullable(laborService.findByProjectId(project.getId())).orElse(new ArrayList<>());
+
+        BigDecimal totalMaterialCost = materialService.calculateTotalMaterialCost(materials);
+        BigDecimal totalLaborCost = laborService.calculateTotalLaborCost(labors);
+
+        BigDecimal vatAmountMaterials = calculateVat(totalMaterialCost, vatRate);
+        BigDecimal vatAmountLabor = calculateVat(totalLaborCost, vatRate);
+        BigDecimal totalBeforeMargin = totalMaterialCost.add(totalLaborCost);
+        BigDecimal profitMarginAmount = calculateProfit(totalBeforeMargin, project.getProjectMargin());
+        BigDecimal finalTotalCost = totalBeforeMargin.add(vatAmountMaterials).add(vatAmountLabor).add(profitMarginAmount);
+
+        // Display results
         System.out.println("--- Résultat du Calcul ---");
         System.out.println("Nom du projet : " + project.getProjectName());
         System.out.println("Client : " + project.getClient().getName());
         System.out.println("Adresse du chantier : " + project.getClient().getAddress());
         System.out.println("Surface : " + project.getSurface() + " m²");
         System.out.println("--- Détail des Coûts ---");
-        System.out.println("Coût total final du projet : " + totalCost + " €");
+
+        // Updated method calls with vatRate
+        displayMaterials(materials, totalMaterialCost, vatAmountMaterials, vatRate);
+        displayLabors(labors, totalLaborCost, vatAmountLabor, vatRate);
+
+        // Final cost summary
+        System.out.printf("\n3. Coût total avant marge : %.2f €%n", totalBeforeMargin);
+        System.out.printf("4. Marge bénéficiaire (%.0f%%) : %.2f €%n", project.getProjectMargin(), profitMarginAmount);
+        System.out.printf("**Coût total final du projet : %.2f €**%n", finalTotalCost);
+    }
+
+    private void displayMaterials(List<Material> materials, BigDecimal totalMaterialCost, BigDecimal vatAmount, BigDecimal vatRate) {
+        System.out.println("1. Matériaux :");
+        for (Material material : materials) {
+            BigDecimal materialTotalCost = material.getUnitCost().multiply(material.getQuantity()).add(material.getTransportCost());
+            System.out.printf("- %s : %.2f € (quantité : %.2f, coût unitaire : %.2f €/m², qualité : %.2f, transport : %.2f €)%n",
+                    material.getName(), materialTotalCost, material.getQuantity(), material.getUnitCost(), material.getQualityCoefficient(), material.getTransportCost());
+        }
+        System.out.printf("**Coût total des matériaux avant TVA : %.2f €**%n", totalMaterialCost);
+        System.out.printf("**Coût total des matériaux avec TVA (%.0f%%) : %.2f €**%n", vatRate, totalMaterialCost.add(vatAmount));
+    }
+
+    private void displayLabors(List<Labor> labors, BigDecimal totalLaborCost, BigDecimal vatAmount, BigDecimal vatRate) {
+        System.out.println("\n2. Main-d'œuvre :");
+        for (Labor labor : labors) {
+            BigDecimal laborTotalCost = labor.getHourlyRate().multiply(labor.getHoursWorked());
+            System.out.printf("- %s : %.2f € (taux horaire : %.2f €/h, heures travaillées : %.2f h, productivité : %.2f)%n",
+                    labor.getName(), laborTotalCost, labor.getHourlyRate(), labor.getHoursWorked(), labor.getProductivityFactor());
+        }
+        System.out.printf("**Coût total de la main-d'œuvre avant TVA : %.2f €**%n", totalLaborCost);
+        System.out.printf("**Coût total de la main-d'œuvre avec TVA (%.0f%%) : %.2f €**%n", vatRate, totalLaborCost.add(vatAmount));
     }
 }

@@ -30,4 +30,32 @@ public class Material extends Component {
     public void setTransportCost(BigDecimal transportCost) {
         this.transportCost = transportCost;
     }
+
+    // Override toString() to print material details in a readable format
+    @Override
+    public String toString() {
+        return String.format("Material: %s | Quantity: %.2f | Unit Cost: %.2f | Tax: %.2f | Transport Cost: %.2f | Quality Coefficient: %.2f",
+                getName(), getQuantity(), getUnitCost(), getTaxRate(), transportCost, qualityCoefficient);
+    }
+
+    // Optional: Override equals and hashCode if you need to compare Material objects or store them in collections like HashSet
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Material)) return false;
+        if (!super.equals(o)) return false;
+
+        Material material = (Material) o;
+
+        if (!qualityCoefficient.equals(material.qualityCoefficient)) return false;
+        return transportCost.equals(material.transportCost);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + qualityCoefficient.hashCode();
+        result = 31 * result + transportCost.hashCode();
+        return result;
+    }
 }

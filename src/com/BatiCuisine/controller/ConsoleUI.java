@@ -231,17 +231,27 @@ public class ConsoleUI {
         Optional<Project> projectOpt = projectService.getProjectById(UUID.fromString(projectId));
         if (projectOpt.isPresent()) {
             Project project = projectOpt.get();
+
             System.out.print("Entrez le taux de TVA en pourcentage : ");
             BigDecimal vatRate = readPositiveBigDecimal("Taux de TVA invalide. Veuillez entrer une valeur positive : ");
+
             System.out.print("Entrez la marge bénéficiaire en pourcentage : ");
             BigDecimal profitMargin = readPositiveBigDecimal("Marge bénéficiaire invalide. Veuillez entrer une valeur positive : ");
 
-            BigDecimal totalCost = projectService.calculateTotalProjectCost(project, vatRate, profitMargin);
-            projectService.displayProjectCostDetails(project, totalCost);
+            // Calculate project cost, now directly using the new method
+            Optional<Project> updatedProjectOpt = projectService.calculateProjectCost(project, vatRate, profitMargin);
+
+            if (updatedProjectOpt.isPresent()) {
+                projectService.displayProjectCostDetails(updatedProjectOpt.get(), vatRate);
+            } else {
+                System.out.println("Erreur dans le calcul du coût du projet.");
+            }
         } else {
             System.out.println("Projet non trouvé.");
         }
     }
+
+
 
     private BigDecimal readPositiveBigDecimal(String errorMessage) {
         BigDecimal value;

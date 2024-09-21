@@ -151,4 +151,35 @@ public class MaterialRepositoryImpl implements MaterialRepository {
             e.printStackTrace();
         }
     }
+    @Override
+    public List<Material> findByProjectId(UUID projectId) {
+        List<Material> materials = new ArrayList<>();
+        String query = "SELECT c.id AS componentId, c.name, c.unitCost, c.quantity, c.taxRate, c.projectId, m.qualityCoefficient, m.transportCost " +
+                "FROM component c JOIN materials m ON c.id = m.componentId WHERE c.projectId = ?";
+
+        try (Connection connection = DataBaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setObject(1, projectId, java.sql.Types.OTHER); // Set the projectId parameter
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                Material material = new Material(
+                        (UUID) resultSet.getObject("componentId"), // UUID
+                        resultSet.getString("name"),                // String (name from Component)
+                        resultSet.getBigDecimal("unitCost"),        // BigDecimal (unitCost from Component)
+                        resultSet.getBigDecimal("quantity"),        // BigDecimal (quantity from Component)
+                        resultSet.getBigDecimal("taxRate"),        // BigDecimal (taxRate from Component)
+                        (UUID) resultSet.getObject("projectId"),    // UUID (projectId from Component)
+                        resultSet.getBigDecimal("qualityCoefficient"), // BigDecimal
+                        resultSet.getBigDecimal("transportCost")    // BigDecimal
+                );
+                materials.add(material);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return materials;
+    }
+
 }
