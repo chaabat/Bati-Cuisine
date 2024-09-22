@@ -67,4 +67,6 @@ public class Client {
     public void setProfessional(boolean isProfessional) {
         this.isProfessional = isProfessional;
     }
+
+
 }

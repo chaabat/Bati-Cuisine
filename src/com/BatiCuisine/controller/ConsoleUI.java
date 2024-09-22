@@ -222,14 +222,100 @@ public class ConsoleUI {
 
     private void viewExistingProjects() {
         List<Project> projects = projectService.listAllProjects();
+
         if (projects.isEmpty()) {
             System.out.println("Aucun projet trouvé.");
+            return;
+        }
+
+        // Display the table header (without Email)
+        System.out.printf("%-5s %-20s %-30s %-20s%n", "N°", "Nom du Client", "Adresse", "Nom du Projet");
+        System.out.println("------------------------------------------------------------------------------------");
+
+        // Display project information in table format
+        int index = 1;
+        for (Project project : projects) {
+            Client client = project.getClient();
+            System.out.printf("%-5d %-20s %-30s %-20s%n",
+                    index++,
+                    client.getName(),
+                    client.getAddress(),
+                    project.getProjectName());
+        }
+
+        // Loop to view project details
+        boolean viewAnotherProject = false;
+        do {
+            // Ask the user to choose a project
+            System.out.print("\nEntrez le numéro du projet pour afficher les détails (ou 0 pour quitter) : ");
+            int selectedProjectIndex = readPositiveInt("Numéro de projet invalide. Veuillez entrer un numéro valide.");
+
+            if (selectedProjectIndex == 0) {
+                System.out.println("Retour au menu principal.");
+                return;
+            }
+
+            if (selectedProjectIndex < 1 || selectedProjectIndex > projects.size()) {
+                System.out.println("Numéro de projet invalide. Veuillez réessayer.");
+                continue;
+            }
+
+            // Display the selected project's details
+            Project selectedProject = projects.get(selectedProjectIndex - 1);
+            displayProjectDetails(selectedProject);
+
+            // Ask if the user wants to view another project
+            System.out.print("\nSouhaitez-vous afficher les détails d'un autre projet ? (y/n) : ");
+            String viewAnother = scanner.nextLine();
+            viewAnotherProject = viewAnother.equalsIgnoreCase("y");
+
+        } while (viewAnotherProject);
+    }
+
+
+    // Helper method to display detailed project information
+    private void displayProjectDetails(Project project) {
+        // Display general project details
+        System.out.println("\n--- Détails du Projet ---");
+        System.out.println("Nom du Client : " + project.getClient().getName());
+        System.out.println("Adresse du Client : " + project.getClient().getAddress());
+        System.out.println("Nom du Projet : " + project.getProjectName());
+        System.out.println("Surface du Projet : " + project.getSurface());
+        System.out.println("Coût total estimé : " + project.getTotalCost());
+        System.out.println("Statut du Projet : " + project.getStatus());
+
+        // Fetch and display materials
+        List<Material> materials = materialService.findByProjectId(project.getId());
+        System.out.println("\n--- Matériaux ---");
+        if (materials.isEmpty()) {
+            System.out.println("Aucun matériel trouvé.");
         } else {
-            for (Project project : projects) {
-                System.out.println(project);
+            for (Material material : materials) {
+                System.out.printf("Nom : %s, Quantité : %.2f, Coût par unité : %.2f, Coût total : %.2f%n",
+                        material.getName(),
+                        material.getQuantity(),
+                        material.getUnitCost(),
+                        material.getQuantity().multiply(material.getUnitCost()));
+            }
+        }
+
+        // Fetch and display labor
+        List<Labor> labors = laborService.findByProjectId(project.getId());
+        System.out.println("\n--- Main d'œuvre ---");
+        if (labors.isEmpty()) {
+            System.out.println("Aucune main d'œuvre trouvée.");
+        } else {
+            for (Labor labor : labors) {
+                System.out.printf("Nom : %s, Heures travaillées : %.2f, Taux horaire : %.2f, Coût total : %.2f%n",
+                        labor.getName(),
+                        labor.getHoursWorked(),
+                        labor.getHourlyRate(),
+                        labor.getHoursWorked().multiply(labor.getHourlyRate()));
             }
         }
     }
+
+
 
     private void calculateProjectCost() {
         System.out.print("Entrez l'identifiant du projet : ");
@@ -342,7 +428,21 @@ public class ConsoleUI {
     }
 
 
-
+    // Helper method to safely read positive integers
+    private int readPositiveInt(String errorMessage) {
+        while (true) {
+            try {
+                int input = Integer.parseInt(scanner.nextLine());
+                if (input >= 0) {
+                    return input;
+                } else {
+                    System.out.println(errorMessage);
+                }
+            } catch (NumberFormatException e) {
+                System.out.println(errorMessage);
+            }
+        }
+    }
 
 
 
