@@ -3,12 +3,10 @@ package com.BatiCuisine.repository.implementation;
 import com.BatiCuisine.model.Project;
 import com.BatiCuisine.model.Client;
 import com.BatiCuisine.model.ProjectStatus;
-
 import com.BatiCuisine.repository.interfaces.ProjectRepository;
 import com.BatiCuisine.config.DataBaseConnection;
 
 import java.sql.*;
-
 import java.util.*;
 
 public class ProjectRepositoryImpl implements ProjectRepository {
@@ -25,22 +23,19 @@ public class ProjectRepositoryImpl implements ProjectRepository {
             UUID projectId = project.getId() != null ? project.getId() : UUID.randomUUID();
             project.setId(projectId);
 
-
             statement.setObject(1, projectId, Types.OTHER);
             statement.setString(2, project.getProjectName());
             statement.setBigDecimal(3, project.getProjectMargin());
             statement.setBigDecimal(4, project.getTotalCost());
             statement.setObject(5, project.getProjectStatus().name(), Types.OTHER);
             statement.setObject(6, project.getClient().getId(), Types.OTHER);
-            statement.setBigDecimal(7, project.getSurface()); // Set surface
-            statement.setString(8, project.getType()); // Set project type
-
+            statement.setBigDecimal(7, project.getSurface());
+            statement.setString(8, project.getType());
 
             statement.executeUpdate();
             projectCache.put(projectId, project);
 
         } catch (SQLException e) {
-
             System.err.println("Error adding project to the database. Details: " + e.getMessage());
         }
     }
@@ -73,14 +68,13 @@ public class ProjectRepositoryImpl implements ProjectRepository {
                                 resultSet.getString("clientPhone"),
                                 resultSet.getBoolean("isProfessional")
                         ),
-                        resultSet.getBigDecimal("surface"), // Get surface
-                        resultSet.getString("type") // Get project type
+                        resultSet.getBigDecimal("surface"),
+                        resultSet.getString("type")
                 );
                 projectCache.put(project.getId(), project);
                 return Optional.of(project);
             }
         } catch (SQLException e) {
-
             System.err.println("Error fetching project by ID. Details: " + e.getMessage());
         }
         return Optional.empty();
@@ -109,14 +103,13 @@ public class ProjectRepositoryImpl implements ProjectRepository {
                                 resultSet.getString("clientPhone"),
                                 resultSet.getBoolean("isProfessional")
                         ),
-                        resultSet.getBigDecimal("surface"), // Get surface
-                        resultSet.getString("type") // Get project type
+                        resultSet.getBigDecimal("surface"),
+                        resultSet.getString("type")
                 );
                 projectCache.put(project.getId(), project);
                 projects.add(project);
             }
         } catch (SQLException e) {
-
             System.err.println("Error fetching all projects from the database. Details: " + e.getMessage());
         }
         return projects;
@@ -132,11 +125,10 @@ public class ProjectRepositoryImpl implements ProjectRepository {
             statement.setString(1, project.getProjectName());
             statement.setBigDecimal(2, project.getProjectMargin());
             statement.setBigDecimal(3, project.getTotalCost());
-            statement.setString(4, project.getProjectStatus().name());  // This needs to be cast to enum type
+            statement.setString(4, project.getProjectStatus().name());
             statement.setBigDecimal(5, project.getSurface());
             statement.setString(6, project.getType());
             statement.setObject(7, project.getId(), Types.OTHER);
-
 
             statement.executeUpdate();
 
@@ -144,6 +136,32 @@ public class ProjectRepositoryImpl implements ProjectRepository {
             System.err.println("Error updating project: " + e.getMessage());
         }
     }
+    public void updateProjectTotalCost(Project project) {
+        String query = "UPDATE projects SET totalCost = ? WHERE id = ?";
+
+        try (Connection connection = DataBaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setBigDecimal(1, project.getTotalCost());
+            statement.setObject(2, project.getId(), Types.OTHER);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error updating project total cost: " + e.getMessage());
+        }
+    }
 
 
+    @Override
+    public Integer getClientProjectsCount(UUID clientId) throws SQLException {
+        String query = "SELECT COUNT(*) FROM projects WHERE clientId = ?";
+        try (Connection connection = DataBaseConnection.getInstance().getConnection();
+             PreparedStatement ps = connection.prepareStatement(query)) {
+            ps.setObject(1, clientId, Types.OTHER);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;  // Return 0 if no projects found
+    }
 }

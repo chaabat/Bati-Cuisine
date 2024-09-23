@@ -1,82 +1,56 @@
 package com.BatiCuisine.util;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.Scanner;
+import java.util.UUID;
 
 public class InputValidator {
 
-    private static final Scanner scanner = new Scanner(System.in);
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    // Handle names (only alphabetic characters and spaces)
+    public boolean handleString(String name) {
+        return name != null && name.matches("[a-zA-Z\\s]+");
+    }
 
-    public static int readPositiveInt(String prompt) {
-        while (true) {
-            System.out.print(prompt);
-            try {
-                int number = Integer.parseInt(scanner.nextLine());
-                if (number > 0) {
-                    return number;
-                } else {
-                    System.out.println("Le nombre doit être supérieur à zéro. Veuillez réessayer.");
-                }
-            } catch (NumberFormatException e) {
-                System.out.println("Entrée non valide. Veuillez entrer un nombre entier.");
-            }
+    // Handle addresses (numbers followed by one or more words)
+    public boolean handleAddress(String address) {
+        return address != null && address.matches("\\d+\\s+([a-zA-Z]+|[a-zA-Z]+\\s[a-zA-Z]+)");
+    }
+
+    // Handle phone numbers (optional country code followed by 7-12 digits)
+    public boolean handlePhone(String phone) {
+        return phone != null && phone.matches("^\\+?\\d{7,12}$");
+    }
+
+    // Handle doubles (must be greater than 0)
+    public boolean handleDouble(String number) {
+        try {
+            double value = Double.parseDouble(number);
+            return value > 0;
+        } catch (NumberFormatException e) {
+            return false;  // Invalid double format
         }
     }
 
-    public static double readPositiveDouble(String prompt) {
-        while (true) {
-            System.out.print(prompt);
-            try {
-                double number = Double.parseDouble(scanner.nextLine());
-                if (number > 0) {
-                    return number;
-                } else {
-                    System.out.println("Le nombre doit être supérieur à zéro. Veuillez réessayer.");
-                }
-            } catch (NumberFormatException e) {
-                System.out.println("Entrée non valide. Veuillez entrer un nombre décimal.");
-            }
+    // Handle integers (must be greater than 0)
+    public boolean handleInt(String number) {
+        try {
+            int value = Integer.parseInt(number);
+            return value > 0;
+        } catch (NumberFormatException e) {
+            return false;  // Invalid integer format
         }
     }
 
-    public static String readNonEmptyString(String prompt) {
-        while (true) {
-            System.out.print(prompt);
-            String input = scanner.nextLine().trim();
-            if (!input.isEmpty()) {
-                return input;
-            } else {
-                System.out.println("Ce champ ne peut pas être vide. Veuillez réessayer.");
-            }
-        }
+    // Validate email format
+    public boolean handleEmail(String email) {
+        return email != null && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$");
     }
 
-    public static boolean readYesNo(String prompt) {
-        while (true) {
-            System.out.print(prompt);
-            String input = scanner.nextLine().trim().toLowerCase();
-            if (input.equals("oui") || input.equals("yes")) {
-                return true;
-            } else if (input.equals("non") || input.equals("no")) {
-                return false;
-            } else {
-                System.out.println("Réponse non valide. Veuillez entrer 'oui' ou 'non'.");
-            }
-        }
-    }
-
-    public static LocalDate readDate(String prompt) {
-        while (true) {
-            try {
-                System.out.print(prompt);
-                String dateString = scanner.nextLine();
-                return LocalDate.parse(dateString, DATE_FORMATTER);
-            } catch (DateTimeParseException e) {
-                System.out.println("Format de date incorrect. Veuillez réessayer.");
-            }
+    // Check if the string is a valid UUID
+    public boolean isUUID(String uuid) {
+        try {
+            UUID.fromString(uuid);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
         }
     }
 }

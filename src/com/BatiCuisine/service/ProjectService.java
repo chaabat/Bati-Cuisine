@@ -8,6 +8,7 @@ import com.BatiCuisine.repository.interfaces.ProjectRepository;
 import com.BatiCuisine.util.CostCalculator;
 
 import java.math.BigDecimal;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -180,5 +181,24 @@ public class ProjectService {
         // Update the project in the repository
         projectRepository.updateProject(updatedProject);
     }
+
+    public int getClientProjectsCount(UUID clientId) {
+        try {
+            return projectRepository.getClientProjectsCount(clientId);
+        } catch (SQLException e) {
+            System.out.println("Erreur lors de la récupération du nombre de projets du client.");
+            e.printStackTrace();
+            return 0;  // Return 0 in case of error
+        }
+    }
+    public void updateProjectTotalCost(Project project) {
+        if (project == null) {
+            throw new IllegalArgumentException("Project cannot be null");
+        }
+
+        projectRepository.updateProjectTotalCost(project);
+    }
+
+
 
 }

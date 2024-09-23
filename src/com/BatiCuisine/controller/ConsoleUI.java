@@ -119,17 +119,16 @@ public class ConsoleUI {
         System.out.print("Entrez la surface du projet (en m²) : ");
         BigDecimal surface = readPositiveBigDecimal("Surface invalide. Veuillez entrer une valeur positive : ");
 
-        // Remove profit margin input during project creation
-        // Profit margin will be null initially and set later during the cost calculation
+
         BigDecimal projectMargin = null;
 
-        System.out.print("Entrez le coût total du projet : ");
-        BigDecimal totalCost = readPositiveBigDecimal("Coût total invalide. Veuillez entrer une valeur positive : ");
+
+        BigDecimal totalCost = BigDecimal.valueOf(0);
 
         // Create the new project with null profit margin
         Project newProject = new Project(
                 projectName,
-                projectMargin,  // Set profit margin to null initially
+                projectMargin,
                 ProjectStatus.IN_PROGRESS,
                 totalCost,
                 client,
@@ -148,8 +147,6 @@ public class ConsoleUI {
         addLabor(newProject);
     }
 
-
-
     private void addMaterials(Project project) {
         boolean addMoreMaterials = true;
         while (addMoreMaterials) {
@@ -161,7 +158,7 @@ public class ConsoleUI {
             BigDecimal unitCost = readPositiveBigDecimal("Coût unitaire invalide. Veuillez entrer une valeur positive : ");
             System.out.print("Entrez le coût de transport de ce matériau (€) : ");
             BigDecimal transportCost = readPositiveBigDecimal("Coût de transport invalide. Veuillez entrer une valeur positive : ");
-            System.out.print("Entrez le coefficient de qualité du matériau : ");
+            System.out.print("Entrez le coefficient de qualité du matériau (1.0 = standard, > 1.0 = haute qualité) : 1.1 ");
             BigDecimal qualityCoefficient = readPositiveBigDecimal("Coefficient invalide. Veuillez entrer une valeur positive : ");
 
             Material material = new Material(
@@ -191,7 +188,7 @@ public class ConsoleUI {
 
             Labor labor = new Labor(
                     UUID.randomUUID(), laborType, BigDecimal.ZERO, BigDecimal.ZERO, // Placeholder values
-                    new BigDecimal("0.20"), // Default taxRate
+                    new BigDecimal("0.20"),
                     project.getId(), hourlyRate, hoursWorked, productivityFactor
             );
 
@@ -316,7 +313,6 @@ public class ConsoleUI {
     }
 
 
-
     private void calculateProjectCost() {
         // Fetch all projects from the service
         List<Project> projects = projectService.listAllProjects();
@@ -379,36 +375,44 @@ public class ConsoleUI {
     }
 
 
-
-
     private void handleQuoteSaving(Project project) {
         System.out.println("--- Enregistrement du Devis ---");
 
-        // Formatting the date to 'dd/MM/yyyy' format
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
         LocalDate issueDate = null;
         LocalDate validityDate = null;
 
-        // Get and parse the issue date
-        while (issueDate == null) {
-            System.out.print("Entrez la date d'émission du devis (format : jj/mm/aaaa) : ");
-            String issueDateString = scanner.nextLine();
-            try {
-                issueDate = LocalDate.parse(issueDateString, formatter);
-            } catch (DateTimeParseException e) {
-                System.out.println("Date invalide. Veuillez entrer la date dans le format jj/mm/aaaa.");
+        while (true) {
+            // Get and parse the issue date
+            while (issueDate == null) {
+                System.out.print("Entrez la date d'émission du devis (format : jj/mm/aaaa) : ");
+                String issueDateString = scanner.nextLine();
+                try {
+                    issueDate = LocalDate.parse(issueDateString, formatter);
+                } catch (DateTimeParseException e) {
+                    System.out.println("Date invalide. Veuillez entrer la date dans le format jj/mm/aaaa.");
+                }
             }
-        }
 
-        // Get and parse the validity date
-        while (validityDate == null) {
-            System.out.print("Entrez la date de validité du devis (format : jj/mm/aaaa) : ");
-            String validityDateString = scanner.nextLine();
-            try {
-                validityDate = LocalDate.parse(validityDateString, formatter);
-            } catch (DateTimeParseException e) {
-                System.out.println("Date invalide. Veuillez entrer la date dans le format jj/mm/aaaa.");
+            // Get and parse the validity date
+            while (validityDate == null) {
+                System.out.print("Entrez la date de validité du devis (format : jj/mm/aaaa) : ");
+                String validityDateString = scanner.nextLine();
+                try {
+                    validityDate = LocalDate.parse(validityDateString, formatter);
+                } catch (DateTimeParseException e) {
+                    System.out.println("Date invalide. Veuillez entrer la date dans le format jj/mm/aaaa.");
+                }
+            }
+
+            // Check if the issue date is before the validity date
+            if (issueDate.isBefore(validityDate)) {
+                break;  // Exit the loop if the dates are valid
+            } else {
+                System.out.println("Erreur : La date d'émission doit être antérieure à la date de validité.");
+                // Reset the dates and start over
+                issueDate = null;
+                validityDate = null;
             }
         }
 
@@ -429,11 +433,11 @@ public class ConsoleUI {
 
         // Create the quote object
         Quote quote = new Quote(
-                estimatedAmount,    // The total cost from the project
-                issueDate,          // LocalDate for the issue date
-                validityDate,       // LocalDate for the validity date
-                quoteAccepted,      // Set to true if the project is completed, otherwise false
-                project             // Pass the entire Project object
+                estimatedAmount,
+                issueDate,
+                validityDate,
+                quoteAccepted,
+                project
         );
 
         // Save the quote in the database
@@ -442,7 +446,6 @@ public class ConsoleUI {
         System.out.println("Devis " + (quoteAccepted ? "accepté" : "non accepté") + " et enregistré avec succès !");
         System.out.println("Le projet est maintenant marqué comme " + (isAccepted ? "terminé !" : "annulé !"));
     }
-
 
 
     // Helper method to safely read positive integers
@@ -460,9 +463,6 @@ public class ConsoleUI {
             }
         }
     }
-
-
-
 
 
     private BigDecimal readPositiveBigDecimal(String errorMessage) {
