@@ -1,15 +1,11 @@
 package com.BatiCuisine.service;
 
-import com.BatiCuisine.model.ProjectStatus;
+
 import com.BatiCuisine.model.Quote;
-import com.BatiCuisine.model.Project;
+
 import com.BatiCuisine.repository.interfaces.QuoteRepository;
 import com.BatiCuisine.repository.interfaces.ProjectRepository;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 public class QuoteService {
     private final QuoteRepository quoteRepository;

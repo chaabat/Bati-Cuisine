@@ -24,27 +24,17 @@ public class Labor extends Component {
         return hourlyRate.multiply(hoursWorked).multiply(productivityFactor);
     }
 
-    public void setHourlyRate(BigDecimal hourlyRate) {
-        this.hourlyRate = hourlyRate;
-    }
 
     public BigDecimal getHoursWorked() {
         return hoursWorked;
-    }
-
-    public void setHoursWorked(BigDecimal hoursWorked) {
-        this.hoursWorked = hoursWorked;
     }
 
     public BigDecimal getProductivityFactor() {
         return productivityFactor;
     }
 
-    public void setProductivityFactor(BigDecimal productivityFactor) {
-        this.productivityFactor = productivityFactor;
-    }
 
-    // Override toString() to print labor details in a readable format
+    // print labor details
     @Override
     public String toString() {
         return String.format("Labor: %s | Hours Worked: %.2f | Hourly Rate: %.2f | Tax: %.2f | Productivity: %.2f",

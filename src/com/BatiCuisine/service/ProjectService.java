@@ -76,8 +76,6 @@ public class ProjectService {
     }
 
 
-
-
     private void validateRate(BigDecimal rate) {
         if (rate == null || rate.compareTo(BigDecimal.ZERO) < 0 || rate.compareTo(BigDecimal.valueOf(100)) > 0) {
             throw new IllegalArgumentException("Rate must be between 0 and 100");
@@ -173,14 +171,6 @@ public class ProjectService {
         projectRepository.updateProject(project);
     }
 
-
-    public List<Project> getAllProjects() {
-        List<Project> projects = projectRepository.getAllProjects();
-        if (projects == null) {
-            return new ArrayList<>();
-        }
-        return projects;
-    }
 
     public void updateProject(Project updatedProject) {
         if (updatedProject == null) {

@@ -9,18 +9,19 @@ import java.util.Objects;
 import java.util.UUID;
 
 public class Project {
-    private UUID id;                     // Project ID
-    private String projectName;          // Name of the project
-    private BigDecimal projectMargin;    // Profit margin
-    private BigDecimal totalCost;        // Total cost of the project
-    private ProjectStatus projectStatus; // Current status of the project
-    private Client client;               // Associated client
-    private List<Material> materials;    // List of materials
-    private List<Labor> labors;          // List of labor
-    private BigDecimal surface;          // Surface area (if applicable)
-    private String type;                 // Type of the project (e.g., Renovation, New Construction)
+    private UUID id;
+    private String projectName;
+    private BigDecimal projectMargin;
+    private BigDecimal totalCost;
+    private ProjectStatus projectStatus;
+    private Client client;
+    private List<Material> materials;
+    private List<Labor> labors;
+    private BigDecimal surface;
+    private String type;
 
-    // Constructor for initializing a Project from the database (with ID)
+    //  initializing a Project from the database (with ID)
+
     public Project(UUID id, String projectName, BigDecimal projectMargin, ProjectStatus projectStatus, BigDecimal totalCost, Client client, BigDecimal surface, String type) {
         this.id = id;
         this.projectName = projectName;
@@ -28,18 +29,19 @@ public class Project {
         this.projectStatus = projectStatus;
         this.totalCost = totalCost;
         this.client = client;
-        this.materials = new ArrayList<>(); // Initialize empty lists
+        this.materials = new ArrayList<>();
         this.labors = new ArrayList<>();
         this.surface = surface;
         this.type = type;
     }
 
-    // Constructor for creating a new Project (without ID)
+    //   creating a new Project without ID
     public Project(String projectName, BigDecimal projectMargin, ProjectStatus projectStatus, BigDecimal totalCost, Client client, BigDecimal surface, String type) {
         this(UUID.randomUUID(), projectName, projectMargin, projectStatus, totalCost, client, surface, type);
     }
 
     // Getters & Setters
+
     public UUID getId() {
         return id;
     }
@@ -52,9 +54,6 @@ public class Project {
         return projectName;
     }
 
-    public void setProjectName(String projectName) {
-        this.projectName = projectName;
-    }
 
     public BigDecimal getProjectMargin() {
         return projectMargin;
@@ -67,7 +66,6 @@ public class Project {
     public BigDecimal getTotalCost() {
         return totalCost;
     }
-
 
 
     public void setTotalCost(BigDecimal totalCost) {
@@ -86,58 +84,20 @@ public class Project {
         return client;
     }
 
-    public void setClient(Client client) {
-        this.client = client;
-    }
-
-    public List<Material> getMaterials() {
-        return materials;
-    }
-
-    public void setMaterials(List<Material> materials) {
-        this.materials = materials;
-    }
-
-    public List<Labor> getLabors() {
-        return labors;
-    }
-
-    public void setLabors(List<Labor> labors) {
-        this.labors = labors;
-    }
 
     public BigDecimal getSurface() {
         return surface;
     }
 
-    public void setSurface(BigDecimal surface) {
-        this.surface = surface;
-    }
 
     public String getType() {
         return type;
     }
 
-    public void setStatus(ProjectStatus projectStatus) {
-        if (projectStatus == null) {
-            throw new IllegalArgumentException("Project status cannot be null");
-        }
-        this.projectStatus = projectStatus;
+    public String getStatus() {
+        return projectStatus != null ? projectStatus.name() : "Unknown status";
     }
 
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    // Add a material to the project
-    public void addMaterial(Material material) {
-        this.materials.add(material);
-    }
-
-    // Add labor to the project
-    public void addLabor(Labor labor) {
-        this.labors.add(labor);
-    }
 
     @Override
     public boolean equals(Object o) {
@@ -174,78 +134,28 @@ public class Project {
         builder.append("Surface: ").append(surface).append(" m²\n");
         builder.append("Type: ").append(type).append("\n");
 
-        // Append material details
+        // material details
         builder.append("\nMaterials:\n");
         if (!materials.isEmpty()) {
             for (Material material : materials) {
                 builder.append(material.toString()).append("\n");
             }
         } else {
-            builder.append("No materials added.\n"); // If materials list is empty
+            builder.append("No materials added.\n");
         }
 
-        // Append labor details
+        //  labor details
         builder.append("\nLabors:\n");
         if (!labors.isEmpty()) {
             for (Labor labor : labors) {
                 builder.append(labor.toString()).append("\n");
             }
         } else {
-            builder.append("No labor added.\n"); // If labors list is empty
+            builder.append("No labor added.\n");
         }
 
         return builder.toString();
     }
 
 
-    public String getStatus() {
-        return projectStatus != null ? projectStatus.name() : "Unknown status";
-    }
-    public BigDecimal getTotalMaterialCostBeforeVAT() {
-        return materials.stream()
-                .map(Material::getTotalCost)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    public BigDecimal getTotalMaterialCostWithVAT(BigDecimal vatRate) {
-        BigDecimal totalBeforeVAT = getTotalMaterialCostBeforeVAT();
-        return totalBeforeVAT.add(totalBeforeVAT.multiply(vatRate.divide(BigDecimal.valueOf(100))));
-    }
-
-    public BigDecimal getTotalLaborCostBeforeVAT() {
-        return labors.stream()
-                .map(Labor::getTotalCost)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    public BigDecimal getTotalLaborCostWithVAT(BigDecimal vatRate) {
-        BigDecimal totalBeforeVAT = getTotalLaborCostBeforeVAT();
-        return totalBeforeVAT.add(totalBeforeVAT.multiply(vatRate.divide(BigDecimal.valueOf(100))));
-    }
-
-    public BigDecimal getTotalCostBeforeMargin() {
-        return getTotalMaterialCostBeforeVAT().add(getTotalLaborCostBeforeVAT());
-    }
-
-    public BigDecimal getProfitMarginAmount(BigDecimal profitMargin) {
-        return getTotalCostBeforeMargin().multiply(profitMargin.divide(BigDecimal.valueOf(100)));
-    }
-
-    public BigDecimal getFinalCost(BigDecimal profitMargin) {
-        return getTotalCostBeforeMargin().add(getProfitMarginAmount(profitMargin));
-    }
-
-    public BigDecimal getTotalMaterialCost() {
-        return CostCalculator.calculateTotalMaterialCost(materials);
-    }
-
-    public BigDecimal getTotalLaborCost() {
-        return CostCalculator.calculateTotalLaborCost(labors);
-    }
-
-    public BigDecimal calculateFinalCost(BigDecimal vatRate, BigDecimal profitMargin) {
-        BigDecimal materialCost = getTotalMaterialCost();
-        BigDecimal laborCost = getTotalLaborCost();
-        return CostCalculator.calculateTotalProjectCost(materialCost, laborCost, vatRate, profitMargin);
-    }
 }

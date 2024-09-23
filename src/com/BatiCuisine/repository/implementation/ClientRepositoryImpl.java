@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ClientRepositoryImpl implements ClientRepository {
-    private final Map<UUID, Client> clientCache = new HashMap<>(); // In-memory cache
+    private final Map<UUID, Client> clientCache = new HashMap<>();
 
     @Override
     public void addClient(Client client) {
@@ -31,35 +31,6 @@ public class ClientRepositoryImpl implements ClientRepository {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-    }
-
-    @Override
-    public Optional<Client> getClientById(UUID id) {
-        if (clientCache.containsKey(id)) {
-            return Optional.of(clientCache.get(id));
-        }
-
-        String query = "SELECT * FROM clients WHERE id = ?";
-        try (Connection connection = DataBaseConnection.getInstance().getConnection();
-             PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setObject(1, id, Types.OTHER);
-            ResultSet resultSet = statement.executeQuery();
-
-            if (resultSet.next()) {
-                Client client = new Client(
-                        (UUID) resultSet.getObject("id"),
-                        resultSet.getString("name"),
-                        resultSet.getString("address"),
-                        resultSet.getString("phone"),
-                        resultSet.getBoolean("isProfessional")
-                );
-                clientCache.put(id, client);  // Cache the client
-                return Optional.of(client);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return Optional.empty();
     }
 
     @Override

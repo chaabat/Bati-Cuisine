@@ -22,19 +22,13 @@ public class Material extends Component {
         return getUnitCost().multiply(getQuantity()).add(transportCost);
     }
 
-    public void setQualityCoefficient(BigDecimal qualityCoefficient) {
-        this.qualityCoefficient = qualityCoefficient;
-    }
 
     public BigDecimal getTransportCost() {
         return transportCost;
     }
 
-    public void setTransportCost(BigDecimal transportCost) {
-        this.transportCost = transportCost;
-    }
 
-    // Override toString() to print material details in a readable format
+    //  print material details in a readable format
     @Override
     public String toString() {
         return String.format("Material: %s | Quantity: %.2f | Unit Cost: %.2f | Tax: %.2f | Transport Cost: %.2f | Quality Coefficient: %.2f",

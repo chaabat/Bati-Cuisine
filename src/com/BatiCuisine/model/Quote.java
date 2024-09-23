@@ -5,14 +5,14 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 public class Quote {
-    private UUID id;                   // Changed to UUID
+    private UUID id;
     private BigDecimal estimatedAmount;
     private LocalDate issueDate;
     private LocalDate validityDate;
     private boolean isAccepted;
     private Project project;
 
-    // Constructor for creating a new Quote (without ID)
+    //  creating a new Quote (without ID)
     public Quote(BigDecimal estimatedAmount, LocalDate issueDate, LocalDate validityDate, boolean isAccepted, Project project) {
         this.id = UUID.randomUUID();
         this.estimatedAmount = estimatedAmount;
@@ -22,7 +22,7 @@ public class Quote {
         this.project = project;
     }
 
-    // Constructor for initializing a Quote from the database (with ID)
+    // initializing a Quote from the database (with ID)
     public Quote(UUID id, BigDecimal estimatedAmount, LocalDate issueDate, LocalDate validityDate, boolean isAccepted, Project project) {
         this.id = id;
         this.estimatedAmount = estimatedAmount;
@@ -33,14 +33,15 @@ public class Quote {
     }
 
 
-
     // Getters & Setters
 
     public UUID getId() {
+
         return id;
     }
 
     public void setId(UUID id) {
+
         this.id = id;
     }
 
@@ -48,33 +49,21 @@ public class Quote {
         return estimatedAmount;
     }
 
-    public void setEstimatedAmount(BigDecimal estimatedAmount) {
-        this.estimatedAmount = estimatedAmount;
-    }
 
     public LocalDate getIssueDate() {
         return issueDate;
     }
 
-    public void setIssueDate(LocalDate issueDate) {
-        this.issueDate = issueDate;
-    }
 
     public LocalDate getValidityDate() {
         return validityDate;
     }
 
-    public void setValidityDate(LocalDate validityDate) {
-        this.validityDate = validityDate;
-    }
 
     public boolean isAccepted() {
         return isAccepted;
     }
 
-    public void setAccepted(boolean accepted) {
-        isAccepted = accepted;
-    }
 
     public Project getProject() {
         return project;

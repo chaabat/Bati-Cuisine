@@ -23,7 +23,4 @@ public class ClientService {
         return clientRepository.getClientsByName(name);
     }
 
-    public List<Client> listAllClients() {
-        return clientRepository.getAllClients();
-    }
 }

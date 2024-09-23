@@ -318,53 +318,66 @@ public class ConsoleUI {
 
 
     private void calculateProjectCost() {
-        System.out.print("Entrez l'identifiant du projet : ");
-        String projectId = scanner.nextLine();
+        // Fetch all projects from the service
+        List<Project> projects = projectService.listAllProjects();
 
-        Optional<Project> projectOpt = projectService.getProjectById(UUID.fromString(projectId));
-        if (projectOpt.isPresent()) {
-            Project project = projectOpt.get();
+        if (projects.isEmpty()) {
+            System.out.println("Aucun projet trouvé.");
+            return;
+        }
 
-            // Ask about applying VAT
-            System.out.print("Souhaitez-vous appliquer une TVA au projet ? (y/n) : ");
-            String applyVatInput = scanner.nextLine();
-            BigDecimal vatRate = BigDecimal.ZERO;
+        // Display the list of available projects
+        System.out.println("=== Projets Disponibles ===");
+        for (int i = 0; i < projects.size(); i++) {
+            Project project = projects.get(i);
+            System.out.printf("%d. %s (Client: %s)%n", i + 1, project.getProjectName(), project.getClient().getName());
+        }
 
-            if (applyVatInput.equalsIgnoreCase("y")) {
-                System.out.print("Entrez le pourcentage de TVA (%) : ");
-                vatRate = readPositiveBigDecimal("Pourcentage de TVA invalide. Veuillez entrer une valeur positive : ");
-            }
+        // Ask the user to select a project by its number
+        System.out.print("\nVeuillez sélectionner un projet par son numéro : ");
+        int projectChoice = readIntInRange(1, projects.size(), "Numéro de projet invalide. Veuillez réessayer.") - 1;
 
-            // Ask about applying profit margin
-            System.out.print("Souhaitez-vous appliquer une marge bénéficiaire au projet ? (y/n) : ");
-            String applyMarginInput = scanner.nextLine();
-            BigDecimal profitMargin = BigDecimal.ZERO;
+        // Retrieve the selected project
+        Project selectedProject = projects.get(projectChoice);
 
-            if (applyMarginInput.equalsIgnoreCase("y")) {
-                System.out.print("Entrez le pourcentage de marge bénéficiaire (%) : ");
-                profitMargin = readPositiveBigDecimal("Pourcentage de marge bénéficiaire invalide. Veuillez entrer une valeur positive : ");
-            }
+        // Ask about applying VAT
+        System.out.print("Souhaitez-vous appliquer une TVA au projet ? (y/n) : ");
+        String applyVatInput = scanner.nextLine();
+        BigDecimal vatRate = BigDecimal.ZERO;
 
-            // Calculate project cost
-            System.out.println("Calcul du coût en cours...");
-            Optional<Project> updatedProjectOpt = projectService.calculateProjectCost(project, vatRate, profitMargin);
+        if (applyVatInput.equalsIgnoreCase("y")) {
+            System.out.print("Entrez le pourcentage de TVA (%) : ");
+            vatRate = readPositiveBigDecimal("Pourcentage de TVA invalide. Veuillez entrer une valeur positive : ");
+        }
 
-            if (updatedProjectOpt.isPresent()) {
-                Project updatedProject = updatedProjectOpt.get();
-                projectService.displayProjectCostDetails(updatedProject, vatRate);
+        // Ask about applying profit margin
+        System.out.print("Souhaitez-vous appliquer une marge bénéficiaire au projet ? (y/n) : ");
+        String applyMarginInput = scanner.nextLine();
+        BigDecimal profitMargin = BigDecimal.ZERO;
 
-                // Save the project with updated profit margin to the database
-                projectService.updateProject(updatedProject);
+        if (applyMarginInput.equalsIgnoreCase("y")) {
+            System.out.print("Entrez le pourcentage de marge bénéficiaire (%) : ");
+            profitMargin = readPositiveBigDecimal("Pourcentage de marge bénéficiaire invalide. Veuillez entrer une valeur positive : ");
+        }
 
-                // Handle saving the quote with the calculated project cost
-                handleQuoteSaving(updatedProject);
-            } else {
-                System.out.println("Erreur dans le calcul du coût du projet.");
-            }
+        // Calculate project cost
+        System.out.println("Calcul du coût en cours...");
+        Optional<Project> updatedProjectOpt = projectService.calculateProjectCost(selectedProject, vatRate, profitMargin);
+
+        if (updatedProjectOpt.isPresent()) {
+            Project updatedProject = updatedProjectOpt.get();
+            projectService.displayProjectCostDetails(updatedProject, vatRate);
+
+            // Save the project with updated profit margin to the database
+            projectService.updateProject(updatedProject);
+
+            // Handle saving the quote with the calculated project cost
+            handleQuoteSaving(updatedProject);
         } else {
-            System.out.println("Projet non trouvé.");
+            System.out.println("Erreur dans le calcul du coût du projet.");
         }
     }
+
 
 
 
@@ -402,19 +415,6 @@ public class ConsoleUI {
         // Use the total project cost already calculated
         BigDecimal estimatedAmount = project.getTotalCost();
 
-        // Create the quote object
-        Quote quote = new Quote(
-                estimatedAmount,    // The total cost from the project
-                issueDate,          // LocalDate for the issue date
-                validityDate,       // LocalDate for the validity date
-                false,              // Initially, the quote is not accepted
-                project             // Pass the entire Project object
-        );
-
-        // Save the quote in the database
-        quoteService.addQuote(quote);
-        System.out.println("Devis enregistré avec succès !");
-
         // Ask if the client accepts the quote
         System.out.print("Acceptez-vous le devis ? (oui/non) : ");
         String acceptanceInput = scanner.nextLine();
@@ -424,8 +424,25 @@ public class ConsoleUI {
         project.setProjectStatus(isAccepted ? ProjectStatus.COMPLETED : ProjectStatus.CANCELLED);
         projectService.updateProjectStatus(project, project.getProjectStatus());
 
+        // If the project status is COMPLETED, set the quote as accepted
+        boolean quoteAccepted = project.getProjectStatus() == ProjectStatus.COMPLETED;
+
+        // Create the quote object
+        Quote quote = new Quote(
+                estimatedAmount,    // The total cost from the project
+                issueDate,          // LocalDate for the issue date
+                validityDate,       // LocalDate for the validity date
+                quoteAccepted,      // Set to true if the project is completed, otherwise false
+                project             // Pass the entire Project object
+        );
+
+        // Save the quote in the database
+        quoteService.addQuote(quote);
+
+        System.out.println("Devis " + (quoteAccepted ? "accepté" : "non accepté") + " et enregistré avec succès !");
         System.out.println("Le projet est maintenant marqué comme " + (isAccepted ? "terminé !" : "annulé !"));
     }
+
 
 
     // Helper method to safely read positive integers

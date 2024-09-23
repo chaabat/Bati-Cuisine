@@ -3,10 +3,10 @@ package com.BatiCuisine.repository.implementation;
 import com.BatiCuisine.model.Quote;
 import com.BatiCuisine.model.Project;
 import com.BatiCuisine.repository.interfaces.QuoteRepository;
-import com.BatiCuisine.repository.interfaces.ProjectRepository; // Import ProjectRepository
+import com.BatiCuisine.repository.interfaces.ProjectRepository;
 import com.BatiCuisine.config.DataBaseConnection;
 
-import java.math.BigDecimal; // Import BigDecimal
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.*;
 
@@ -124,12 +124,12 @@ public class QuoteRepositoryImpl implements QuoteRepository {
     private Quote createQuoteFromResultSet(ResultSet rs) throws SQLException {
         UUID id = (UUID) rs.getObject("id");
         BigDecimal estimatedAmount = rs.getBigDecimal("estimatedAmount");
-        java.sql.Date issueDate = rs.getDate("issueDate"); // Use java.sql.Date
-        java.sql.Date validityDate = rs.getDate("validityDate"); // Use java.sql.Date
+        java.sql.Date issueDate = rs.getDate("issueDate");
+        java.sql.Date validityDate = rs.getDate("validityDate");
         boolean isAccepted = rs.getBoolean("isAccepted");
         UUID projectId = (UUID) rs.getObject("projectId");
 
-        ProjectRepository projectRepository = new ProjectRepositoryImpl(); // Replace with dependency injection if needed
+        ProjectRepository projectRepository = new ProjectRepositoryImpl();
         Optional<Project> projectOpt = projectRepository.getProjectById(projectId);
         Project project = projectOpt.orElseThrow(() -> new SQLException("Project not found for quote"));
 

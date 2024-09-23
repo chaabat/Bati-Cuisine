@@ -4,13 +4,13 @@ import java.util.UUID;
 
 public class Client {
 
-    private UUID id;  // Change id type to UUID
+    private UUID id;
     private String name;
     private String address;
     private String phone;
     private boolean isProfessional;
 
-    // Constructor with UUID (when fetched from database)
+    // Constructor when fetched from database
     public Client(UUID id, String name, String address, String phone, boolean isProfessional) {
         this.id = id;
         this.name = name;
@@ -19,7 +19,7 @@ public class Client {
         this.isProfessional = isProfessional;
     }
 
-    // Constructor without UUID (for new clients, UUID generated automatically in database)
+    // Constructor  for new clients
     public Client(String name, String address, String phone, boolean isProfessional) {
         this.name = name;
         this.address = address;
@@ -48,24 +48,14 @@ public class Client {
         return address;
     }
 
-    public void setAddress(String address) {
-        this.address = address;
-    }
 
     public String getPhone() {
         return phone;
     }
 
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
 
     public boolean isProfessional() {
         return isProfessional;
-    }
-
-    public void setProfessional(boolean isProfessional) {
-        this.isProfessional = isProfessional;
     }
 
 

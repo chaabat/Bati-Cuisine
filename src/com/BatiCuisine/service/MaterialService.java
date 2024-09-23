@@ -26,9 +26,7 @@ public class MaterialService {
     }
 
 
-    public List<Material> listMaterials() {
-        return materialRepository.getAllMaterials();
-    }
+
 
     public BigDecimal calculateTotalMaterialCost(List<Material> materials) {
         BigDecimal totalCost = BigDecimal.ZERO;

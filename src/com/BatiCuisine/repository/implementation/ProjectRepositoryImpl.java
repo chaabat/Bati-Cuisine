@@ -3,12 +3,12 @@ package com.BatiCuisine.repository.implementation;
 import com.BatiCuisine.model.Project;
 import com.BatiCuisine.model.Client;
 import com.BatiCuisine.model.ProjectStatus;
-import com.BatiCuisine.model.Quote;
+
 import com.BatiCuisine.repository.interfaces.ProjectRepository;
 import com.BatiCuisine.config.DataBaseConnection;
 
 import java.sql.*;
-import java.math.BigDecimal;
+
 import java.util.*;
 
 public class ProjectRepositoryImpl implements ProjectRepository {
@@ -25,7 +25,7 @@ public class ProjectRepositoryImpl implements ProjectRepository {
             UUID projectId = project.getId() != null ? project.getId() : UUID.randomUUID();
             project.setId(projectId);
 
-            // Set parameters for the prepared statement
+
             statement.setObject(1, projectId, Types.OTHER);
             statement.setString(2, project.getProjectName());
             statement.setBigDecimal(3, project.getProjectMargin());
@@ -35,12 +35,12 @@ public class ProjectRepositoryImpl implements ProjectRepository {
             statement.setBigDecimal(7, project.getSurface()); // Set surface
             statement.setString(8, project.getType()); // Set project type
 
-            // Execute the query
+
             statement.executeUpdate();
             projectCache.put(projectId, project);
 
         } catch (SQLException e) {
-            // Improved error message with context
+
             System.err.println("Error adding project to the database. Details: " + e.getMessage());
         }
     }
@@ -80,7 +80,7 @@ public class ProjectRepositoryImpl implements ProjectRepository {
                 return Optional.of(project);
             }
         } catch (SQLException e) {
-            // Improved error message with context
+
             System.err.println("Error fetching project by ID. Details: " + e.getMessage());
         }
         return Optional.empty();
@@ -116,7 +116,7 @@ public class ProjectRepositoryImpl implements ProjectRepository {
                 projects.add(project);
             }
         } catch (SQLException e) {
-            // Improved error message with context
+
             System.err.println("Error fetching all projects from the database. Details: " + e.getMessage());
         }
         return projects;
@@ -137,16 +137,13 @@ public class ProjectRepositoryImpl implements ProjectRepository {
             statement.setString(6, project.getType());
             statement.setObject(7, project.getId(), Types.OTHER);
 
-            // Execute the update
+
             statement.executeUpdate();
 
         } catch (SQLException e) {
             System.err.println("Error updating project: " + e.getMessage());
         }
     }
-
-
-
 
 
 }

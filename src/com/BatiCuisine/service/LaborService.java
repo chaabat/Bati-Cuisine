@@ -20,13 +20,9 @@ public class LaborService {
         }
         laborRepository.addLabor(labor);
     }
+
     public List<Labor> findByProjectId(UUID projectId) {
         return laborRepository.findByProjectId(projectId);
-    }
-
-
-    public List<Labor> listLabor() {
-        return laborRepository.getAllLabors();
     }
 
     public BigDecimal calculateTotalLaborCost(List<Labor> labors) {
