@@ -1,3 +1,4 @@
 # Ignorer les fichiers de configuration sensibles
 
 ressources/application.properties
+out
