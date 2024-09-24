@@ -2,12 +2,17 @@ package com.BatiCuisine.controller;
 
 import com.BatiCuisine.model.*;
 import com.BatiCuisine.service.*;
+import com.BatiCuisine.util.InputValidator;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static com.BatiCuisine.util.InputValidator.scanner;
 
 public class ConsoleUI {
 
@@ -16,7 +21,7 @@ public class ConsoleUI {
     private final LaborService laborService;
     private final ClientService clientService;
     private final QuoteService quoteService;
-    private final Scanner scanner = new Scanner(System.in);
+    private final InputValidator inputValidator = new InputValidator();
 
     public ConsoleUI(ProjectService projectService, MaterialService materialService, LaborService laborService, ClientService clientService, QuoteService quoteService) {
         this.projectService = projectService;
@@ -24,7 +29,6 @@ public class ConsoleUI {
         this.laborService = laborService;
         this.clientService = clientService;
         this.quoteService = quoteService;
-
     }
 
     public void showMainMenu() {
@@ -37,7 +41,7 @@ public class ConsoleUI {
             System.out.println("4. Quitter");
             System.out.print("Choisissez une option : ");
 
-            int choice = readIntInRange(1, 4, "Option invalide. Veuillez réessayer.");
+            int choice = inputValidator.readIntInRange(1, 4, "Option invalide. Veuillez réessayer.");
 
             switch (choice) {
                 case 1:
@@ -65,9 +69,8 @@ public class ConsoleUI {
         System.out.println("Souhaitez-vous chercher un client existant ou en ajouter un nouveau ?");
         System.out.println("1. Chercher un client existant");
         System.out.println("2. Ajouter un nouveau client");
-        System.out.print("Choisissez une option : ");
+        int clientChoice = inputValidator.readIntInRange(1, 2, "Option invalide. Veuillez réessayer.");
 
-        int clientChoice = readIntInRange(1, 2, "Option invalide. Veuillez réessayer.");
         if (clientChoice == 1) {
             System.out.print("Entrez le nom du client : ");
             String clientName = scanner.nextLine();
@@ -81,7 +84,7 @@ public class ConsoleUI {
                     System.out.println("Adresse : " + client.getAddress());
                     System.out.println("Numéro de téléphone : " + client.getPhone());
                     System.out.print("Souhaitez-vous continuer avec ce client ? (y/n) : ");
-                    if (!scanner.nextLine().equalsIgnoreCase("y")) {
+                    if (!inputValidator.readBoolean("Souhaitez-vous continuer avec ce client ?")) {
                         System.out.println("Aucun client sélectionné. Annulation de la création du projet.");
                         return;
                     }
@@ -94,7 +97,7 @@ public class ConsoleUI {
                         System.out.println("   Numéro de téléphone : " + foundClient.getPhone());
                     }
                     System.out.print("Veuillez sélectionner un client en entrant le numéro : ");
-                    int selectedIndex = readIntInRange(1, clients.size(), "Choix invalide. Veuillez réessayer.") - 1;
+                    int selectedIndex = inputValidator.readIntInRange(1, clients.size(), "Choix invalide. Veuillez réessayer.") - 1;
                     client = clients.get(selectedIndex);
                 }
             } else {
@@ -102,31 +105,29 @@ public class ConsoleUI {
                 return;
             }
         } else {
-            client = addNewClient();
+            client = addNewClient(); // Implement this method to gather new client details
         }
 
         // Get project type
         System.out.println("Choisissez le type de projet :");
         System.out.println("1. Rénovation");
         System.out.println("2. Construction");
-        System.out.print("Choisissez une option : ");
-        int projectTypeChoice = readIntInRange(1, 2, "Option invalide. Veuillez réessayer.");
+        int projectTypeChoice = inputValidator.readIntInRange(1, 2, "Option invalide. Veuillez réessayer.");
         String projectType = (projectTypeChoice == 1) ? "Rénovation" : "Construction";
 
         // Get project details
         System.out.print("Entrez le nom du projet : ");
         String projectName = scanner.nextLine();
         System.out.print("Entrez la surface du projet (en m²) : ");
-        BigDecimal surface = readPositiveBigDecimal("Surface invalide. Veuillez entrer une valeur positive : ");
+        BigDecimal surface = inputValidator.readPositiveBigDecimal("Surface invalide. Veuillez entrer une valeur positive : ");
 
+        // Set profit margin and total cost
+        BigDecimal projectMargin = BigDecimal.ZERO; // Set default margin, can be updated later
+        BigDecimal totalCost = BigDecimal.ZERO; // Initial total cost
 
-        BigDecimal projectMargin = null;
-
-
-        BigDecimal totalCost = BigDecimal.valueOf(0);
-
-        // Create the new project with null profit margin
+        // Create the new project
         Project newProject = new Project(
+                UUID.randomUUID(),
                 projectName,
                 projectMargin,
                 ProjectStatus.IN_PROGRESS,
@@ -142,9 +143,9 @@ public class ConsoleUI {
 
         // Add materials and labor
         System.out.println("--- Ajout des matériaux ---");
-        addMaterials(newProject);
+        addMaterials(newProject); // Implement this method to gather material details
         System.out.println("--- Ajout de la main-d'œuvre ---");
-        addLabor(newProject);
+        addLabor(newProject); // Implement this method to gather labor details
     }
 
     private void addMaterials(Project project) {
@@ -152,17 +153,22 @@ public class ConsoleUI {
         while (addMoreMaterials) {
             System.out.print("Entrez le nom du matériau : ");
             String materialName = scanner.nextLine();
+
             System.out.print("Entrez la quantité de ce matériau : ");
-            BigDecimal quantity = readPositiveBigDecimal("Quantité invalide. Veuillez entrer une valeur positive : ");
+            BigDecimal quantity = inputValidator.readPositiveBigDecimal("Quantité invalide. Veuillez entrer une valeur positive : ");
+
             System.out.print("Entrez le coût unitaire de ce matériau (€/unité) : ");
-            BigDecimal unitCost = readPositiveBigDecimal("Coût unitaire invalide. Veuillez entrer une valeur positive : ");
+            BigDecimal unitCost = inputValidator.readPositiveBigDecimal("Coût unitaire invalide. Veuillez entrer une valeur positive : ");
+
             System.out.print("Entrez le coût de transport de ce matériau (€) : ");
-            BigDecimal transportCost = readPositiveBigDecimal("Coût de transport invalide. Veuillez entrer une valeur positive : ");
-            System.out.print("Entrez le coefficient de qualité du matériau (1.0 = standard, > 1.0 = haute qualité) : 1.1 ");
-            BigDecimal qualityCoefficient = readPositiveBigDecimal("Coefficient invalide. Veuillez entrer une valeur positive : ");
+            BigDecimal transportCost = inputValidator.readPositiveBigDecimal("Coût de transport invalide. Veuillez entrer une valeur positive : ");
+
+            System.out.print("Entrez le coefficient de qualité du matériau (1.0 = standard, > 1.0 = haute qualité) : ");
+            BigDecimal qualityCoefficient = inputValidator.readPositiveBigDecimal("Coefficient invalide. Veuillez entrer une valeur positive : ");
 
             Material material = new Material(
-                    UUID.randomUUID(), materialName, unitCost, quantity, new BigDecimal("0.20"), // Default taxRate
+                    UUID.randomUUID(), materialName, unitCost, quantity,
+                    new BigDecimal("0.20"), // Default taxRate
                     project.getId(), qualityCoefficient, transportCost
             );
 
@@ -170,7 +176,7 @@ public class ConsoleUI {
             System.out.println("Matériau ajouté avec succès !");
 
             System.out.print("Voulez-vous ajouter un autre matériau ? (oui/non) : ");
-            addMoreMaterials = scanner.nextLine().equalsIgnoreCase("oui");
+            addMoreMaterials = inputValidator.readBoolean("Voulez-vous ajouter un autre matériau ?");
         }
     }
 
@@ -179,16 +185,19 @@ public class ConsoleUI {
         while (addMoreLabor) {
             System.out.print("Entrez le type de main-d'œuvre (e.g., Ouvrier de base) : ");
             String laborType = scanner.nextLine();
+
             System.out.print("Entrez le taux horaire de cette main-d'œuvre (€/h) : ");
-            BigDecimal hourlyRate = readPositiveBigDecimal("Taux horaire invalide. Veuillez entrer une valeur positive : ");
+            BigDecimal hourlyRate = inputValidator.readPositiveBigDecimal("Taux horaire invalide. Veuillez entrer une valeur positive : ");
+
             System.out.print("Entrez le nombre d'heures travaillées : ");
-            BigDecimal hoursWorked = readPositiveBigDecimal("Nombre d'heures invalide. Veuillez entrer une valeur positive : ");
+            BigDecimal hoursWorked = inputValidator.readPositiveBigDecimal("Nombre d'heures invalide. Veuillez entrer une valeur positive : ");
+
             System.out.print("Entrez le facteur de productivité (1.0 = standard, > 1.0 = haute productivité) : ");
-            BigDecimal productivityFactor = readPositiveBigDecimal("Facteur de productivité invalide. Veuillez entrer une valeur positive : ");
+            BigDecimal productivityFactor = inputValidator.readPositiveBigDecimal("Facteur de productivité invalide. Veuillez entrer une valeur positive : ");
 
             Labor labor = new Labor(
                     UUID.randomUUID(), laborType, BigDecimal.ZERO, BigDecimal.ZERO, // Placeholder values
-                    new BigDecimal("0.20"),
+                    new BigDecimal("0.20"), // Default taxRate
                     project.getId(), hourlyRate, hoursWorked, productivityFactor
             );
 
@@ -196,24 +205,26 @@ public class ConsoleUI {
             System.out.println("Main-d'œuvre ajoutée avec succès !");
 
             System.out.print("Voulez-vous ajouter un autre type de main-d'œuvre ? (oui/non) : ");
-            addMoreLabor = scanner.nextLine().equalsIgnoreCase("oui");
+            addMoreLabor = inputValidator.readBoolean("Voulez-vous ajouter un autre type de main-d'œuvre ?");
         }
     }
 
     private Client addNewClient() {
         System.out.print("Entrez le nom du nouveau client : ");
         String clientName = scanner.nextLine();
+
         System.out.print("Entrez l'adresse du client : ");
         String clientAddress = scanner.nextLine();
+
         System.out.print("Entrez le numéro de téléphone du client : ");
         String clientPhone = scanner.nextLine();
-        System.out.print("Le client est-il un professionnel ? (true/false) : ");
-        boolean isProfessional = scanner.nextBoolean();
-        scanner.nextLine();  // Consume newline
+
+        System.out.print("Le client est-il un professionnel ? (oui/non) : ");
+        boolean isProfessional = inputValidator.readBoolean("Le client est-il un professionnel ?");
 
         Client newClient = new Client(UUID.randomUUID(), clientName, clientAddress, clientPhone, isProfessional);
         clientService.addClient(newClient);
-        System.out.println("Nouveau client ajouté avec succès !");
+        System.out.println("Client ajouté avec succès !");
         return newClient;
     }
 
@@ -245,7 +256,7 @@ public class ConsoleUI {
         do {
             // Ask the user to choose a project
             System.out.print("\nEntrez le numéro du projet pour afficher les détails (ou 0 pour quitter) : ");
-            int selectedProjectIndex = readPositiveInt("Numéro de projet invalide. Veuillez entrer un numéro valide.");
+            int selectedProjectIndex = inputValidator.readPositiveInt("Numéro de projet invalide. Veuillez entrer un numéro valide.");
 
             if (selectedProjectIndex == 0) {
                 System.out.println("Retour au menu principal.");
@@ -269,8 +280,6 @@ public class ConsoleUI {
         } while (viewAnotherProject);
     }
 
-
-    // Helper method to display detailed project information
     private void displayProjectDetails(Project project) {
         // Display general project details
         System.out.println("\n--- Détails du Projet ---");
@@ -312,7 +321,6 @@ public class ConsoleUI {
         }
     }
 
-
     private void calculateProjectCost() {
         // Fetch all projects from the service
         List<Project> projects = projectService.listAllProjects();
@@ -331,7 +339,7 @@ public class ConsoleUI {
 
         // Ask the user to select a project by its number
         System.out.print("\nVeuillez sélectionner un projet par son numéro : ");
-        int projectChoice = readIntInRange(1, projects.size(), "Numéro de projet invalide. Veuillez réessayer.") - 1;
+        int projectChoice = inputValidator.readIntInRange(1, projects.size(), "Numéro de projet invalide. Veuillez réessayer.") - 1;
 
         // Retrieve the selected project
         Project selectedProject = projects.get(projectChoice);
@@ -343,7 +351,7 @@ public class ConsoleUI {
 
         if (applyVatInput.equalsIgnoreCase("y")) {
             System.out.print("Entrez le pourcentage de TVA (%) : ");
-            vatRate = readPositiveBigDecimal("Pourcentage de TVA invalide. Veuillez entrer une valeur positive : ");
+            vatRate = inputValidator.readPositiveBigDecimal("Pourcentage de TVA invalide. Veuillez entrer une valeur positive : ");
         }
 
         // Ask about applying profit margin
@@ -353,7 +361,7 @@ public class ConsoleUI {
 
         if (applyMarginInput.equalsIgnoreCase("y")) {
             System.out.print("Entrez le pourcentage de marge bénéficiaire (%) : ");
-            profitMargin = readPositiveBigDecimal("Pourcentage de marge bénéficiaire invalide. Veuillez entrer une valeur positive : ");
+            profitMargin = inputValidator.readPositiveBigDecimal("Pourcentage de marge bénéficiaire invalide. Veuillez entrer une valeur positive : ");
         }
 
         // Calculate project cost
@@ -445,59 +453,5 @@ public class ConsoleUI {
 
         System.out.println("Devis " + (quoteAccepted ? "accepté" : "non accepté") + " et enregistré avec succès !");
         System.out.println("Le projet est maintenant marqué comme " + (isAccepted ? "terminé !" : "annulé !"));
-    }
-
-
-    // Helper method to safely read positive integers
-    private int readPositiveInt(String errorMessage) {
-        while (true) {
-            try {
-                int input = Integer.parseInt(scanner.nextLine());
-                if (input >= 0) {
-                    return input;
-                } else {
-                    System.out.println(errorMessage);
-                }
-            } catch (NumberFormatException e) {
-                System.out.println(errorMessage);
-            }
-        }
-    }
-
-
-    private BigDecimal readPositiveBigDecimal(String errorMessage) {
-        BigDecimal value;
-        while (true) {
-            try {
-                value = scanner.nextBigDecimal();
-                if (value.compareTo(BigDecimal.ZERO) > 0) {
-                    scanner.nextLine();  // Consume the newline
-                    return value;
-                } else {
-                    System.out.print(errorMessage);
-                }
-            } catch (InputMismatchException e) {
-                System.out.print(errorMessage);
-                scanner.nextLine();  // Consume the invalid input
-            }
-        }
-    }
-
-    private int readIntInRange(int min, int max, String errorMessage) {
-        int choice;
-        while (true) {
-            try {
-                choice = scanner.nextInt();
-                scanner.nextLine();  // Consume the newline
-                if (choice >= min && choice <= max) {
-                    return choice;
-                } else {
-                    System.out.print(errorMessage);
-                }
-            } catch (InputMismatchException e) {
-                System.out.print(errorMessage);
-                scanner.nextLine();  // Consume the invalid input
-            }
-        }
     }
 }

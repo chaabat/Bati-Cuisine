@@ -74,4 +74,5 @@ public class CostCalculator {
                 return isProfessional ? BigDecimal.valueOf(0.75) : BigDecimal.valueOf(0.86);  // 25% for pros, 14% for others
         }
     }
+
 }
