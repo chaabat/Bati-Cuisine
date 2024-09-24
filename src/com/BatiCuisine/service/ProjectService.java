@@ -1,6 +1,9 @@
 package com.BatiCuisine.service;
 
-import com.BatiCuisine.model.*;
+import com.BatiCuisine.model.Project;
+import com.BatiCuisine.model.Material;
+import com.BatiCuisine.model.Labor;
+import com.BatiCuisine.model.ProjectStatus;
 import com.BatiCuisine.repository.interfaces.ProjectRepository;
 import com.BatiCuisine.util.CostCalculator;
 
@@ -10,6 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import static com.BatiCuisine.util.CostCalculator.totalCostWithDiscount;
 
 public class ProjectService {
     private final ProjectRepository projectRepository;
@@ -100,23 +105,36 @@ public class ProjectService {
             throw new IllegalArgumentException("Project cannot be null");
         }
 
+        // Retrieve the materials and labors for the project
         List<Material> materials = Optional.ofNullable(materialService.findByProjectId(project.getId())).orElse(new ArrayList<>());
         List<Labor> labors = Optional.ofNullable(laborService.findByProjectId(project.getId())).orElse(new ArrayList<>());
 
+        // Calculate total costs
         BigDecimal totalMaterialCost = materialService.calculateTotalMaterialCost(materials);
         BigDecimal totalLaborCost = laborService.calculateTotalLaborCost(labors);
 
+        // Calculate VAT and total before margin
         BigDecimal vatAmountMaterials = calculateVat(totalMaterialCost, vatRate);
         BigDecimal vatAmountLabor = calculateVat(totalLaborCost, vatRate);
         BigDecimal totalBeforeMargin = totalMaterialCost.add(totalLaborCost);
         BigDecimal profitMarginAmount = calculateProfit(totalBeforeMargin, project.getProjectMargin());
+
+        // Get the client projects count and check if the client is professional
+        int projectCount = getProjectCountByClient(project.getClient().getId());
+        boolean isProfessional = project.getClient().isProfessional(); // Assuming 'isProfessional' is a boolean in your Client class
+
+        // Calculate the total cost with discount using the updated method
+        BigDecimal totalCostWithDiscount = totalCostWithDiscount(totalBeforeMargin.add(profitMarginAmount), projectCount, isProfessional);
+        project.setTotalCost(totalCostWithDiscount); // Update project total cost
+
+        // Calculate the final total cost
         BigDecimal finalTotalCost = totalBeforeMargin.add(vatAmountMaterials).add(vatAmountLabor).add(profitMarginAmount);
 
         // Display results
         System.out.println("--- Résultat du Calcul ---");
         System.out.println("Nom du projet : " + project.getProjectName());
         System.out.println("Client : " + project.getClient().getName());
-        System.out.println("Adresse du chantier : " + project.getClient().getAddress());
+        System.out.println("Adresse : " + project.getClient().getAddress());
         System.out.println("Surface : " + project.getSurface() + " m²");
         System.out.println("--- Détail des Coûts ---");
 
@@ -126,9 +144,11 @@ public class ProjectService {
 
         // Final cost summary
         System.out.printf("\n3. Coût total avant marge : %.2f €%n", totalBeforeMargin);
-        System.out.printf("4. Marge bénéficiaire (%.0f%%) : %.2f €%n", project.getProjectMargin(), profitMarginAmount);
-        System.out.printf("**Coût total final du projet : %.2f €**%n", finalTotalCost);
+        System.out.printf("\n4. Marge bénéficiaire (%.0f%%) : %.2f €%n", project.getProjectMargin(), profitMarginAmount);
+        System.out.printf("Coût total du projet sans reduction : %.2f €**%n", finalTotalCost);
+        System.out.printf("Coût final du projet : %.2f €%n", totalCostWithDiscount);
     }
+
 
 
     private void displayMaterials(List<Material> materials, BigDecimal totalMaterialCost, BigDecimal vatAmount, BigDecimal vatRate) {
@@ -196,12 +216,13 @@ public class ProjectService {
         projectRepository.updateProjectTotalCost(project);
     }
 
-    public int getProjectCountByClient(Client client) {
+    public int getProjectCountByClient(UUID clientId) {
         List<Project> allProjects = listAllProjects(); // Fetch all projects
         return (int) allProjects.stream()
-                .filter(project -> project.getClient().equals(client)) // Check if project belongs to the client
+                .filter(project -> project.getClient().getId().equals(clientId)) // Check if the client's ID matches
                 .count(); // Count the number of matching projects
     }
+
 
 
 

@@ -136,6 +136,7 @@ public class Project {
                 Objects.equals(type, project.type);
     }
 
+
     @Override
     public int hashCode() {
         return Objects.hash(id, projectName, projectMargin, totalCost, projectStatus, client, materials, labors, surface, type);

@@ -11,7 +11,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 
-import static com.BatiCuisine.util.CostCalculator.getDiscountRate;
+
+import static com.BatiCuisine.util.CostCalculator.totalCostWithDiscount;
 import static com.BatiCuisine.util.InputValidator.*;
 
 public class ConsoleUI {
@@ -425,6 +426,9 @@ public class ConsoleUI {
 
         if (updatedProjectOpt.isPresent()) {
             Project updatedProject = updatedProjectOpt.get();
+
+
+            // Display the project cost details including any reductions
             projectService.displayProjectCostDetails(updatedProject, vatRate);
 
             // Save the project with updated profit margin to the database
