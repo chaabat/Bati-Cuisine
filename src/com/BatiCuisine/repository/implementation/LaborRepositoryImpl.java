@@ -46,35 +46,6 @@ public class LaborRepositoryImpl implements LaborRepository {
 
 
     @Override
-    public List<Labor> getAllLabors() {
-        List<Labor> laborList = new ArrayList<>();
-        String query = "SELECT c.id AS componentId, c.name, c.unitCost, c.taxRate, c.projectId, l.hourlyRate, l.hoursWorked, l.productivityFactor " +
-                "FROM labor l JOIN component c ON l.componentId = c.id";
-        try (Connection connection = DataBaseConnection.getInstance().getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(query)) {
-
-            while (resultSet.next()) {
-                Labor labor = new Labor(
-                        (UUID) resultSet.getObject("componentId"),
-                        resultSet.getString("name"),
-                        resultSet.getBigDecimal("unitCost"),
-                        BigDecimal.ZERO,
-                        resultSet.getBigDecimal("taxRate"),
-                        (UUID) resultSet.getObject("projectId"),
-                        resultSet.getBigDecimal("hourlyRate"),
-                        resultSet.getBigDecimal("hoursWorked"),
-                        resultSet.getBigDecimal("productivityFactor")
-                );
-                laborList.add(labor);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return laborList;
-    }
-
-    @Override
     public List<Labor> findByProjectId(UUID projectId) {
         List<Labor> laborList = new ArrayList<>();
         String query = "SELECT c.id AS componentId, c.name, c.unitCost, c.taxRate, c.projectId, l.hourlyRate, l.hoursWorked, l.productivityFactor " +

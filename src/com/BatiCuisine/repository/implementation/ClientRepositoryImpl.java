@@ -21,12 +21,12 @@ public class ClientRepositoryImpl implements ClientRepository {
             statement.setString(3, client.getPhone());
             statement.setBoolean(4, client.isProfessional());
 
-            // Execute the insert and retrieve the generated client ID
+
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
                 UUID generatedId = (UUID) resultSet.getObject("id");
-                client.setId(generatedId);  // Set the ID back to the client object
-                clientCache.put(generatedId, client); // Cache the client
+                client.setId(generatedId);
+                clientCache.put(generatedId, client);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -45,10 +45,10 @@ public class ClientRepositoryImpl implements ClientRepository {
         // Check cache first
         clients.addAll(clientCache.values().stream()
                 .filter(client -> client.getName().equalsIgnoreCase(name))
-                .collect(Collectors.toList())); // Use collect to gather into a list
+                .collect(Collectors.toList()));
 
-        // Query the database if needed
-        String query = "SELECT * FROM clients WHERE LOWER(name) = LOWER(?)"; // Using LOWER for case-insensitive search
+
+        String query = "SELECT * FROM clients WHERE LOWER(name) = LOWER(?)";
         try (Connection connection = DataBaseConnection.getInstance().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, name);
@@ -62,7 +62,7 @@ public class ClientRepositoryImpl implements ClientRepository {
                         resultSet.getString("phone"),
                         resultSet.getBoolean("isProfessional")
                 );
-                clientCache.put(client.getId(), client); // Cache the client after retrieving from the database
+                clientCache.put(client.getId(), client);
                 clients.add(client);
             }
         } catch (SQLException e) {

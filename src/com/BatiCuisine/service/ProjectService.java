@@ -70,7 +70,7 @@ public class ProjectService {
                 totalMaterialCost, totalLaborCost, vatRate, project.getProjectMargin()
         );
 
-        project.setTotalCost(totalProjectCost);  // Update total cost in the project
+        project.setTotalCost(totalProjectCost);
 
         // Save the updated project in the repository
         updateProject(project);
@@ -199,25 +199,10 @@ public class ProjectService {
         projectRepository.updateProject(updatedProject);
     }
 
-    public int getClientProjectsCount(UUID clientId) {
-        try {
-            return projectRepository.getClientProjectsCount(clientId);
-        } catch (SQLException e) {
-            System.out.println("Erreur lors de la récupération du nombre de projets du client.");
-            e.printStackTrace();
-            return 0;  // Return 0 in case of error
-        }
-    }
-    public void updateProjectTotalCost(Project project) {
-        if (project == null) {
-            throw new IllegalArgumentException("Project cannot be null");
-        }
 
-        projectRepository.updateProjectTotalCost(project);
-    }
 
     public int getProjectCountByClient(UUID clientId) {
-        List<Project> allProjects = listAllProjects(); // Fetch all projects
+        List<Project> allProjects = listAllProjects();
         return (int) allProjects.stream()
                 .filter(project -> project.getClient().getId().equals(clientId)) // Check if the client's ID matches
                 .count(); // Count the number of matching projects

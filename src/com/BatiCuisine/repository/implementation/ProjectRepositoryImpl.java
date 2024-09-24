@@ -162,6 +162,6 @@ public class ProjectRepositoryImpl implements ProjectRepository {
                 return rs.getInt(1);
             }
         }
-        return 0;  // Return 0 if no projects found
+        return 0;
     }
 }

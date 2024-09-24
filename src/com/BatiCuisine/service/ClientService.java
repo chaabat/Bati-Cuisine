@@ -3,9 +3,8 @@ package com.BatiCuisine.service;
 import com.BatiCuisine.model.Client;
 import com.BatiCuisine.repository.interfaces.ClientRepository;
 
-import java.sql.SQLException;
 import java.util.List;
-import java.util.UUID;
+
 
 public class ClientService {
     private final ClientRepository clientRepository;

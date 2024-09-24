@@ -2,7 +2,6 @@ package com.BatiCuisine.controller;
 
 import com.BatiCuisine.model.*;
 import com.BatiCuisine.service.*;
-import com.BatiCuisine.util.CostCalculator;
 import com.BatiCuisine.util.InputValidator;
 
 import java.math.BigDecimal;
@@ -11,8 +10,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 
-
-import static com.BatiCuisine.util.CostCalculator.totalCostWithDiscount;
 import static com.BatiCuisine.util.InputValidator.*;
 
 public class ConsoleUI {
@@ -128,8 +125,7 @@ public class ConsoleUI {
         BigDecimal projectMargin =  BigDecimal.valueOf(0);
         BigDecimal totalCost = BigDecimal.valueOf(0);
 
-
-        // Create the new project with null profit margin
+        // Create the new project
         Project newProject = new Project(
                 projectName,
                 projectMargin,
@@ -140,7 +136,7 @@ public class ConsoleUI {
                 projectType
         );
 
-        // Add the project to the repository
+        // Add the project
         projectService.addProject(newProject);
         System.out.println("Projet créé avec succès !");
 
@@ -216,7 +212,7 @@ public class ConsoleUI {
             System.out.print("Entrez le nom du nouveau client : ");
             clientName = scanner.nextLine();
             if (InputValidator.isValidName(clientName)) {
-                break; // Valid name, exit loop
+                break;
             } else {
                 System.out.println("Nom invalide. Veuillez entrer un nom valide (lettres et espaces uniquement).");
             }
@@ -227,7 +223,7 @@ public class ConsoleUI {
             System.out.print("Entrez l'adresse du client : ");
             clientAddress = scanner.nextLine();
             if (InputValidator.isValidAddress(clientAddress)) {
-                break; // Valid address, exit loop
+                break;
             } else {
                 System.out.println("Adresse invalide. Veuillez entrer une adresse valide (Ex : 123 rue riad).");
             }
@@ -238,7 +234,7 @@ public class ConsoleUI {
             System.out.print("Entrez le numéro de téléphone du client : ");
             clientPhone = scanner.nextLine();
             if (InputValidator.isValidPhone(clientPhone)) {
-                break; // Valid phone, exit loop
+                break;
             } else {
                 System.out.println("Numéro de téléphone invalide. Veuillez entrer un numéro valide (10 chiffres, optionnel avec +).");
             }
@@ -302,12 +298,12 @@ public class ConsoleUI {
                 String input = scanner.nextLine().trim();
                 if (input.isEmpty()) {
                     System.out.println("Veuillez entrer un numéro valide.");
-                    continue; // Re-prompt the user
+                    continue;
                 }
 
                 try {
                     selectedProjectIndex = Integer.parseInt(input);
-                    break; // Exit the loop if parsing is successful
+                    break;
                 } catch (NumberFormatException e) {
                     System.out.println("Numéro de projet invalide. Veuillez entrer un numéro valide.");
                 }
@@ -452,7 +448,7 @@ public class ConsoleUI {
         LocalDate validityDate = null;
 
         while (true) {
-            // Get and parse the issue date
+
             while (issueDate == null) {
                 System.out.print("Entrez la date d'émission du devis (format : jj/mm/aaaa) : ");
                 String issueDateString = scanner.nextLine();
@@ -463,7 +459,7 @@ public class ConsoleUI {
                 }
             }
 
-            // Get and parse the validity date
+
             while (validityDate == null) {
                 System.out.print("Entrez la date de validité du devis (format : jj/mm/aaaa) : ");
                 String validityDateString = scanner.nextLine();
@@ -476,10 +472,10 @@ public class ConsoleUI {
 
             // Check if the issue date is before the validity date
             if (issueDate.isBefore(validityDate)) {
-                break;  // Exit the loop if the dates are valid
+                break;
             } else {
                 System.out.println("Erreur : La date d'émission doit être antérieure à la date de validité.");
-                // Reset the dates and start over
+
                 issueDate = null;
                 validityDate = null;
             }
@@ -509,14 +505,12 @@ public class ConsoleUI {
                 project
         );
 
-        // Save the quote in the database
+
         quoteService.addQuote(quote);
 
         System.out.println("Devis " + (quoteAccepted ? "accepté" : "non accepté") + " et enregistré avec succès !");
         System.out.println("Le projet est maintenant marqué comme " + (isAccepted ? "terminé !" : "annulé !"));
     }
-
-
 
 
 }
