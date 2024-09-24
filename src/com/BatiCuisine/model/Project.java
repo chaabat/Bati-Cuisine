@@ -20,8 +20,7 @@ public class Project {
     private BigDecimal surface;
     private String type;
 
-    //  initializing a Project from the database (with ID)
-
+    // Initializing a Project from the database (with ID)
     public Project(UUID id, String projectName, BigDecimal projectMargin, ProjectStatus projectStatus, BigDecimal totalCost, Client client, BigDecimal surface, String type) {
         this.id = id;
         this.projectName = projectName;
@@ -35,12 +34,19 @@ public class Project {
         this.type = type;
     }
 
-    //   creating a new Project without ID
+    // Creating a new Project without ID
     public Project(String projectName, BigDecimal projectMargin, ProjectStatus projectStatus, BigDecimal totalCost, Client client, BigDecimal surface, String type) {
         this(UUID.randomUUID(), projectName, projectMargin, projectStatus, totalCost, client, surface, type);
     }
 
     // Getters & Setters
+    public List<Material> getMaterials() {
+        return materials;
+    }
+
+    public List<Labor> getLabors() {
+        return labors;
+    }
 
     public UUID getId() {
         return id;
@@ -54,7 +60,6 @@ public class Project {
         return projectName;
     }
 
-
     public BigDecimal getProjectMargin() {
         return projectMargin;
     }
@@ -66,7 +71,6 @@ public class Project {
     public BigDecimal getTotalCost() {
         return totalCost;
     }
-
 
     public void setTotalCost(BigDecimal totalCost) {
         this.totalCost = totalCost;
@@ -84,11 +88,9 @@ public class Project {
         return client;
     }
 
-
     public BigDecimal getSurface() {
         return surface;
     }
-
 
     public String getType() {
         return type;
@@ -98,6 +100,24 @@ public class Project {
         return projectStatus != null ? projectStatus.name() : "Unknown status";
     }
 
+    // Calculate total costs for materials and labor
+    public BigDecimal calculateTotalCost() {
+        BigDecimal totalMaterialCost = materials.stream()
+                .map(Material::getTotalCost) // Assuming Material has a method to get its total cost
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalLaborCost = labors.stream()
+                .map(Labor::getTotalCost) // Assuming Labor has a method to get its total cost
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return totalMaterialCost.add(totalLaborCost);
+    }
+
+    public BigDecimal calculateFinalCost() {
+        BigDecimal totalCostBeforeMargin = calculateTotalCost();
+        BigDecimal profitMargin = totalCostBeforeMargin.multiply(new BigDecimal("0.15")); // 15% margin
+        return totalCostBeforeMargin.add(profitMargin);
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -129,12 +149,12 @@ public class Project {
         builder.append("Client: ").append(client.getName()).append("\n");
         builder.append("Client Address: ").append(client.getAddress()).append("\n");
         builder.append("Project Margin: ").append(projectMargin).append("%\n");
-        builder.append("Total Cost: ").append(totalCost).append("€\n");
+        builder.append("Total Cost: ").append(calculateFinalCost()).append("€\n"); // Use final cost here
         builder.append("Status: ").append(projectStatus).append("\n");
         builder.append("Surface: ").append(surface).append(" m²\n");
         builder.append("Type: ").append(type).append("\n");
 
-        // material details
+        // Material details
         builder.append("\nMaterials:\n");
         if (!materials.isEmpty()) {
             for (Material material : materials) {
@@ -144,7 +164,7 @@ public class Project {
             builder.append("No materials added.\n");
         }
 
-        //  labor details
+        // Labor details
         builder.append("\nLabors:\n");
         if (!labors.isEmpty()) {
             for (Labor labor : labors) {
@@ -156,6 +176,4 @@ public class Project {
 
         return builder.toString();
     }
-
-
 }

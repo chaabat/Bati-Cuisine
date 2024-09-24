@@ -1,9 +1,6 @@
 package com.BatiCuisine.service;
 
-import com.BatiCuisine.model.Project;
-import com.BatiCuisine.model.Material;
-import com.BatiCuisine.model.Labor;
-import com.BatiCuisine.model.ProjectStatus;
+import com.BatiCuisine.model.*;
 import com.BatiCuisine.repository.interfaces.ProjectRepository;
 import com.BatiCuisine.util.CostCalculator;
 
@@ -197,6 +194,13 @@ public class ProjectService {
         }
 
         projectRepository.updateProjectTotalCost(project);
+    }
+
+    public int getProjectCountByClient(Client client) {
+        List<Project> allProjects = listAllProjects(); // Fetch all projects
+        return (int) allProjects.stream()
+                .filter(project -> project.getClient().equals(client)) // Check if project belongs to the client
+                .count(); // Count the number of matching projects
     }
 
 

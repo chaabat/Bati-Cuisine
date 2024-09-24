@@ -57,22 +57,34 @@ public class CostCalculator {
     }
 
     // Determine Discount Rate Based on Number of Projects and Client Type
-    private static BigDecimal getDiscountRate(int projects, boolean isProfessional) {
+    public static BigDecimal getDiscountRate(int projects, boolean isProfessional) {
         if (projects < 0) {
             throw new IllegalArgumentException("Le nombre de projets ne peut pas être négatif.");
         }
 
         // Different discount rates for professionals and non-professionals
-        switch (projects) {
-            case 3:
-                return isProfessional ? BigDecimal.valueOf(0.90) : BigDecimal.valueOf(0.98);  // 10% for pros, 2% for others
-            case 5:
-                return isProfessional ? BigDecimal.valueOf(0.85) : BigDecimal.valueOf(0.94);  // 15% for pros, 6% for others
-            case 10:
-                return isProfessional ? BigDecimal.valueOf(0.80) : BigDecimal.valueOf(0.90);  // 20% for pros, 10% for others
-            default:
-                return isProfessional ? BigDecimal.valueOf(0.75) : BigDecimal.valueOf(0.86);  // 25% for pros, 14% for others
+        if (isProfessional) {
+            if (projects >= 1 && projects <= 3) {
+                return BigDecimal.valueOf(0.92); // 8% discount for pros
+            } else if (projects > 3 && projects <= 7) {
+                return BigDecimal.valueOf(0.87); // 13% discount for pros
+            } else if (projects > 7 && projects <= 10) {
+                return BigDecimal.valueOf(0.82); // 18% discount for pros
+            } else {
+                return BigDecimal.valueOf(0.78); // 22% discount for pros
+            }
+        } else {
+            if (projects >= 1 && projects <= 3) {
+                return BigDecimal.valueOf(0.96); // 4% discount for others
+            } else if (projects > 3 && projects <= 7) {
+                return BigDecimal.valueOf(0.92); // 8% discount for others
+            } else if (projects > 7 && projects <= 10) {
+                return BigDecimal.valueOf(0.88); // 12% discount for others
+            } else {
+                return BigDecimal.valueOf(0.84); // 16% discount for others
+            }
         }
     }
+
 
 }

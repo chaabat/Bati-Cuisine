@@ -10,7 +10,9 @@ import java.util.UUID;
 public class InputValidator {
     public static final Scanner scanner = new Scanner(System.in);
 
-    public int readIntInRange(int min, int max, String errorMessage) {
+
+
+    public static int readIntInRange(int min, int max, String errorMessage) {
         while (true) {
             try {
                 int input = Integer.parseInt(scanner.nextLine());
@@ -24,7 +26,7 @@ public class InputValidator {
         }
     }
 
-    public BigDecimal readPositiveBigDecimal(String errorMessage) {
+    public static BigDecimal readPositiveBigDecimal(String errorMessage) {
         while (true) {
             try {
                 BigDecimal input = new BigDecimal(scanner.nextLine());
@@ -37,6 +39,11 @@ public class InputValidator {
             }
         }
     }
+
+    public static boolean readYesOrNo(String s) {
+        return false;
+    }
+
 
     public LocalDate readDate(String prompt, String errorMessage) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -77,19 +84,19 @@ public class InputValidator {
         }
     }
 
-    public boolean isValidName(String name) {
+    public static boolean isValidName(String name) {
         return name != null && name.matches("[a-zA-Z\\s]+");
     }
 
-    public boolean isValidAddress(String address) {
+    public static boolean isValidAddress(String address) {
         return address != null && address.matches("\\d+\\s+([a-zA-Z]+|[a-zA-Z]+\\s[a-zA-Z]+)");
     }
 
-    public boolean isValidPhone(String phone) {
+    public static boolean isValidPhone(String phone) {
         return phone != null && phone.matches("^\\+?\\d{7,12}$");
     }
 
-    public boolean isPositiveNumber(String number) {
+    public static boolean isPositiveNumber(String number) {
         try {
             return Double.parseDouble(number) > 0;
         } catch (NumberFormatException e) {
@@ -110,22 +117,12 @@ public class InputValidator {
         }
     }
 
-    public int readPositiveInt(String s) {
+    public static int readPositiveInt(String s) {
         return 0;
     }
 
     public boolean readYesNo(String s) {
         return false;
-    }
-    public UUID readUUID(String errorMessage) {
-        while (true) {
-            String input = scanner.nextLine();
-            try {
-                return UUID.fromString(input);
-            } catch (IllegalArgumentException e) {
-                System.out.println(errorMessage);
-            }
-        }
     }
 
 }
